@@ -255,7 +255,6 @@ https://unleashed.vercel.app/witness/${userSlug}`;
               try {
                 await Share.share({
                   url: uri,
-                  message: shareMessage,
                 });
                 await markAsShared();
               } catch (error: any) {
