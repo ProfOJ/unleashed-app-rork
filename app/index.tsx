@@ -1,8 +1,10 @@
 import { colors } from '@/constants/colors';
+import { useWitness } from '@/contexts/WitnessContext';
 import { useRouter } from 'expo-router';
 import { Heart, Send, Users } from 'lucide-react-native';
 import React, { useEffect, useRef } from 'react';
 import {
+  ActivityIndicator,
   Animated,
   Image,
   StyleSheet,
@@ -14,27 +16,49 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function Index() {
   const router = useRouter();
+  const { userProfile, isLoading } = useWitness();
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(50)).current;
 
   useEffect(() => {
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 800,
-        useNativeDriver: true,
-      }),
-      Animated.timing(slideAnim, {
-        toValue: 0,
-        duration: 800,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  }, [fadeAnim, slideAnim]);
+    if (!isLoading) {
+      if (userProfile?.name) {
+        console.log('User profile exists, redirecting to dashboard...');
+        router.replace('/dashboard');
+      } else {
+        console.log('No user profile, showing welcome screen...');
+        Animated.parallel([
+          Animated.timing(fadeAnim, {
+            toValue: 1,
+            duration: 800,
+            useNativeDriver: true,
+          }),
+          Animated.timing(slideAnim, {
+            toValue: 0,
+            duration: 800,
+            useNativeDriver: true,
+          }),
+        ]).start();
+      }
+    }
+  }, [isLoading, userProfile, router, fadeAnim, slideAnim]);
 
   const handleGetStarted = () => {
-    router.push('/wizard-step1' as any);
+    router.push('/wizard-step1');
   };
+
+  if (isLoading) {
+    return (
+      <View style={[styles.background, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color={colors.white} />
+        <Text style={[styles.tagline, { marginTop: 16 }]}>Loading...</Text>
+      </View>
+    );
+  }
+
+  if (userProfile?.name) {
+    return null;
+  }
 
   return (
     <View style={styles.background}>

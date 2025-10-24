@@ -1,7 +1,7 @@
 import { colors } from '@/constants/colors';
 import { useWitness } from '@/contexts/WitnessContext';
 import { useRouter } from 'expo-router';
-import { Award, BookOpen, ChevronRight, Edit, Edit2, Menu, MessageSquare, Plus, Trash2, User } from 'lucide-react-native';
+import { BookOpen, ChevronRight, Edit, Edit2, LogOut, Menu, MessageSquare, Plus, Trash2, User } from 'lucide-react-native';
 import React, { useCallback, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
@@ -44,7 +44,7 @@ type WitnessCard = {
 
 export default function Dashboard() {
   const router = useRouter();
-  const { userProfile } = useWitness();
+  const { userProfile, reset } = useWitness();
   const [menuVisible, setMenuVisible] = useState(false);
   const [testimonies, setTestimonies] = useState<Testimony[]>([]);
   const [witnessCard, setWitnessCard] = useState<WitnessCard | null>(null);
@@ -186,6 +186,36 @@ export default function Dashboard() {
     }
   };
 
+  const handleSignOut = () => {
+    Alert.alert(
+      'Sign Out',
+      'Are you sure you want to sign out? This will clear all your local data.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Sign Out',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              setMenuVisible(false);
+              console.log('Signing out and clearing all data...');
+              
+              await AsyncStorage.clear();
+              
+              reset();
+              
+              console.log('All data cleared, redirecting to wizard...');
+              router.replace('/wizard-step1');
+            } catch (error) {
+              console.error('Error during sign out:', error);
+              Alert.alert('Error', 'Failed to sign out. Please try again.');
+            }
+          },
+        },
+      ]
+    );
+  };
+
   const getCategoryLabel = (testimony: Testimony) => {
     const labels: { [key: string]: string } = {
       seen: "What I've Seen",
@@ -306,6 +336,17 @@ export default function Dashboard() {
               >
                 <Text style={styles.menuItemText}>Test Database</Text>
                 <ChevronRight size={20} color={colors.text.secondary} />
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={[styles.menuItem, styles.signOutItem]}
+                onPress={() => handleSignOut()}
+                activeOpacity={0.7}
+              >
+                <View style={styles.signOutContent}>
+                  <LogOut size={20} color="#EF4444" />
+                  <Text style={styles.signOutText}>Sign Out</Text>
+                </View>
               </TouchableOpacity>
             </View>
 
@@ -648,6 +689,20 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600' as const,
     color: colors.primary,
+  },
+  signOutItem: {
+    borderBottomWidth: 0,
+    marginTop: 8,
+  },
+  signOutContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  signOutText: {
+    fontSize: 16,
+    fontWeight: '600' as const,
+    color: '#EF4444',
   },
   headerTitle: {
     fontSize: 18,
