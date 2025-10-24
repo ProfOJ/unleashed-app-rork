@@ -1,10 +1,12 @@
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { StyleSheet } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { WitnessProvider } from "@/contexts/WitnessContext";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { trpc, trpcClient } from "@/lib/trpc";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -22,17 +24,23 @@ function RootLayoutNav() {
 }
 
 export default function RootLayout() {
+  const [queryClient] = useState(() => new QueryClient());
+
   useEffect(() => {
     SplashScreen.hideAsync();
   }, []);
 
   return (
-    <WitnessProvider>
-      <GestureHandlerRootView style={styles.container}>
-        <StatusBar style="light" backgroundColor="#0B1C45" />
-        <RootLayoutNav />
-      </GestureHandlerRootView>
-    </WitnessProvider>
+    <trpc.Provider client={trpcClient} queryClient={queryClient}>
+      <QueryClientProvider client={queryClient}>
+        <WitnessProvider>
+          <GestureHandlerRootView style={styles.container}>
+            <StatusBar style="light" backgroundColor="#0B1C45" />
+            <RootLayoutNav />
+          </GestureHandlerRootView>
+        </WitnessProvider>
+      </QueryClientProvider>
+    </trpc.Provider>
   );
 }
 
