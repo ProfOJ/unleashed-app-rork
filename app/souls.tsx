@@ -1,7 +1,7 @@
 import { colors } from '@/constants/colors';
 import { useRouter } from 'expo-router';
 import { useWitness } from '@/contexts/WitnessContext';
-import { api } from '@/lib/api-client';
+import { trpc } from '@/lib/trpc';
 import {
   ArrowLeft,
   Calendar,
@@ -27,7 +27,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+
 import { useFocusEffect } from '@react-navigation/native';
 import * as Location from 'expo-location';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -61,33 +61,41 @@ export default function Souls() {
     date: new Date().toISOString().split('T')[0],
   });
 
-  const SOULS_KEY = '@unleashed_souls';
+  const getSoulsQuery = trpc.souls.getSouls.useQuery(
+    { witnessProfileId: userProfile?.id || '' },
+    { enabled: !!userProfile?.id }
+  );
 
-  const loadSouls = async () => {
-    try {
-      setIsLoading(true);
-      console.log('Loading souls from localStorage...');
-      const stored = await AsyncStorage.getItem(SOULS_KEY);
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        console.log('Loaded souls:', parsed);
-        setSouls(parsed.reverse());
-      } else {
-        console.log('No souls found in localStorage');
-        setSouls([]);
-      }
-    } catch (error) {
-      console.error('Error loading souls:', error);
+  const saveSoulMutation = trpc.souls.saveSoul.useMutation({
+    onSuccess: () => {
+      getSoulsQuery.refetch();
+    },
+  });
+
+  const deleteSoulMutation = trpc.souls.deleteSoul.useMutation({
+    onSuccess: () => {
+      getSoulsQuery.refetch();
+    },
+  });
+
+  const awardPointsMutation = trpc.points.awardPoints.useMutation();
+
+  React.useEffect(() => {
+    if (getSoulsQuery.data?.souls) {
+      setSouls(getSoulsQuery.data.souls as any[]);
+      setIsLoading(false);
+    } else if (!getSoulsQuery.isLoading) {
       setSouls([]);
-    } finally {
       setIsLoading(false);
     }
-  };
+  }, [getSoulsQuery.data, getSoulsQuery.isLoading]);
 
   useFocusEffect(
     useCallback(() => {
-      loadSouls();
-    }, [])
+      if (userProfile?.id) {
+        getSoulsQuery.refetch();
+      }
+    }, [userProfile?.id, getSoulsQuery])
   );
 
   const handleDetectLocation = async () => {
@@ -157,35 +165,35 @@ export default function Souls() {
       return;
     }
 
+    if (!userProfile?.id) {
+      Alert.alert('Error', 'User profile not found. Please complete onboarding first.');
+      return;
+    }
+
     try {
-      const newSoul: Soul = {
-        id: Date.now().toString(),
+      console.log('Adding new soul:', formData);
+
+      await saveSoulMutation.mutateAsync({
+        witnessProfileId: userProfile.id,
         name: formData.name,
-        contact: formData.contact,
-        location: formData.location,
-        notes: formData.notes,
-        handedTo: formData.handedTo,
+        contact: formData.contact || undefined,
+        location: formData.location || undefined,
+        notes: formData.notes || undefined,
+        handedTo: formData.handedTo || undefined,
         date: formData.date,
-        createdAt: new Date().toISOString(),
-      };
+      });
 
-      console.log('Adding new soul:', newSoul);
+      console.log('Soul saved to database');
 
-      const updatedSouls = [newSoul, ...souls];
-      await AsyncStorage.setItem(SOULS_KEY, JSON.stringify(updatedSouls));
-      setSouls(updatedSouls);
-
-      if (userProfile?.id) {
-        try {
-          await api.points.awardPoints({
-            witnessProfileId: userProfile.id,
-            actionType: 'soul_added',
-            description: `Added soul: ${formData.name}`,
-          });
-          console.log('Points awarded for adding soul');
-        } catch (error) {
-          console.error('Failed to award points for soul:', error);
-        }
+      try {
+        await awardPointsMutation.mutateAsync({
+          witnessProfileId: userProfile.id,
+          actionType: 'soul_added',
+          description: `Added soul: ${formData.name}`,
+        });
+        console.log('Points awarded for adding soul');
+      } catch (error) {
+        console.error('Failed to award points for soul:', error);
       }
 
       setFormData({
@@ -201,7 +209,7 @@ export default function Souls() {
       Alert.alert('Success', 'Soul added successfully!');
     } catch (error) {
       console.error('Error adding soul:', error);
-      Alert.alert('Error', 'Failed to add soul');
+      Alert.alert('Error', 'Failed to add soul. Please try again.');
     }
   };
 
@@ -213,9 +221,8 @@ export default function Souls() {
         style: 'destructive',
         onPress: async () => {
           try {
-            const filtered = souls.filter((s) => s.id !== id);
-            await AsyncStorage.setItem(SOULS_KEY, JSON.stringify(filtered));
-            setSouls(filtered);
+            console.log('Deleting soul:', id);
+            await deleteSoulMutation.mutateAsync({ id });
             Alert.alert('Success', 'Soul removed successfully');
           } catch (error) {
             console.error('Error deleting soul:', error);

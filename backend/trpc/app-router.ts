@@ -12,6 +12,9 @@ import awardPointsProcedure from "./routes/points/award-points/route";
 import getLeaderboardProcedure from "./routes/points/get-leaderboard/route";
 import getUserStatsProcedure from "./routes/points/get-user-stats/route";
 import runTestsProcedure from "./routes/test/run-tests/route";
+import saveSoulProcedure from "./routes/souls/save-soul/route";
+import getSoulsProcedure from "./routes/souls/get-souls/route";
+import deleteSoulProcedure from "./routes/souls/delete-soul/route";
 
 export const appRouter = createTRPCRouter({
   example: createTRPCRouter({
@@ -34,6 +37,11 @@ export const appRouter = createTRPCRouter({
   }),
   test: createTRPCRouter({
     runTests: runTestsProcedure,
+  }),
+  souls: createTRPCRouter({
+    saveSoul: saveSoulProcedure,
+    getSouls: getSoulsProcedure,
+    deleteSoul: deleteSoulProcedure,
   }),
 });
 
