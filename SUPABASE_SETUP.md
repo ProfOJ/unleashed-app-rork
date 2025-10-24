@@ -63,6 +63,19 @@ This will create:
 2. The backend should now connect to Supabase
 3. Check the backend console for any connection errors
 
+## Updating Existing Database
+
+If you already have an existing database and need to add the new columns to the `testimonies` table, run this SQL in the SQL Editor:
+
+```sql
+-- Add new columns to testimonies table
+ALTER TABLE testimonies ADD COLUMN IF NOT EXISTS category TEXT;
+ALTER TABLE testimonies ADD COLUMN IF NOT EXISTS original_message TEXT;
+ALTER TABLE testimonies ADD COLUMN IF NOT EXISTS enhanced_message TEXT;
+```
+
+This will add the required columns without affecting existing data.
+
 ## Database Schema
 
 ### witness_profiles
@@ -82,6 +95,9 @@ Stores user profile information
 Stores testimony data linked to profiles
 - `id` (UUID, Primary Key)
 - `witness_profile_id` (UUID, Foreign Key → witness_profiles.id)
+- `category` (TEXT, optional) - Type of testimony: "seen", "heard", "experienced"
+- `original_message` (TEXT, optional) - Original testimony message
+- `enhanced_message` (TEXT, optional) - AI-enhanced testimony message
 - `tell_online` (BOOLEAN)
 - `tell_in_person` (BOOLEAN)
 - `go_workplace` (BOOLEAN)

@@ -16,6 +16,9 @@ CREATE TABLE IF NOT EXISTS witness_profiles (
 CREATE TABLE IF NOT EXISTS testimonies (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   witness_profile_id UUID NOT NULL REFERENCES witness_profiles(id) ON DELETE CASCADE,
+  category TEXT,
+  original_message TEXT,
+  enhanced_message TEXT,
   tell_online BOOLEAN DEFAULT FALSE,
   tell_in_person BOOLEAN DEFAULT FALSE,
   go_workplace BOOLEAN DEFAULT FALSE,
