@@ -1,7 +1,7 @@
 import { colors } from '@/constants/colors';
 import { useRouter } from 'expo-router';
 import { useWitness } from '@/contexts/WitnessContext';
-import { trpc } from '@/lib/trpc';
+import { api } from '@/lib/api-client';
 import {
   ArrowLeft,
   Calendar,
@@ -13,7 +13,7 @@ import {
   UserCheck,
   X,
 } from 'lucide-react-native';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -61,41 +61,36 @@ export default function Souls() {
     date: new Date().toISOString().split('T')[0],
   });
 
-  const getSoulsQuery = trpc.souls.getSouls.useQuery(
-    { witnessProfileId: userProfile?.id || '' },
-    { enabled: !!userProfile?.id }
-  );
-
-  const saveSoulMutation = trpc.souls.saveSoul.useMutation({
-    onSuccess: () => {
-      getSoulsQuery.refetch();
-    },
-  });
-
-  const deleteSoulMutation = trpc.souls.deleteSoul.useMutation({
-    onSuccess: () => {
-      getSoulsQuery.refetch();
-    },
-  });
-
-  const awardPointsMutation = trpc.points.awardPoints.useMutation();
-
-  React.useEffect(() => {
-    if (getSoulsQuery.data?.souls) {
-      setSouls(getSoulsQuery.data.souls as any[]);
+  const loadSouls = useCallback(async () => {
+    if (!userProfile?.id) {
       setIsLoading(false);
-    } else if (!getSoulsQuery.isLoading) {
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      console.log('Loading souls for profile:', userProfile.id);
+      const soulsData = await api.witness.getSouls(userProfile.id);
+      console.log('Souls loaded:', soulsData.length);
+      setSouls(soulsData as any[]);
+    } catch (error) {
+      console.error('Error loading souls:', error);
       setSouls([]);
+    } finally {
       setIsLoading(false);
     }
-  }, [getSoulsQuery.data, getSoulsQuery.isLoading]);
+  }, [userProfile?.id]);
+
+  useEffect(() => {
+    loadSouls();
+  }, [loadSouls]);
 
   useFocusEffect(
     useCallback(() => {
       if (userProfile?.id) {
-        getSoulsQuery.refetch();
+        loadSouls();
       }
-    }, [userProfile?.id, getSoulsQuery])
+    }, [userProfile?.id, loadSouls])
   );
 
   const handleDetectLocation = async () => {
@@ -173,7 +168,7 @@ export default function Souls() {
     try {
       console.log('Adding new soul:', formData);
 
-      await saveSoulMutation.mutateAsync({
+      await api.witness.saveSoul({
         witnessProfileId: userProfile.id,
         name: formData.name,
         contact: formData.contact || undefined,
@@ -186,7 +181,7 @@ export default function Souls() {
       console.log('Soul saved to database');
 
       try {
-        await awardPointsMutation.mutateAsync({
+        await api.points.awardPoints({
           witnessProfileId: userProfile.id,
           actionType: 'soul_added',
           description: `Added soul: ${formData.name}`,
@@ -205,6 +200,7 @@ export default function Souls() {
         date: new Date().toISOString().split('T')[0],
       });
 
+      await loadSouls();
       setModalVisible(false);
       Alert.alert('Success', 'Soul added successfully!');
     } catch (error) {
@@ -222,7 +218,8 @@ export default function Souls() {
         onPress: async () => {
           try {
             console.log('Deleting soul:', id);
-            await deleteSoulMutation.mutateAsync({ id });
+            await api.witness.deleteSoul(id);
+            await loadSouls();
             Alert.alert('Success', 'Soul removed successfully');
           } catch (error) {
             console.error('Error deleting soul:', error);

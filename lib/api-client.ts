@@ -421,6 +421,16 @@ Just write the witness card message directly, no explanations.`;
       }));
     },
 
+    deleteSoul: async (soulId: string) => {
+      await supabaseClient.delete('/souls', {
+        params: {
+          id: `eq.${soulId}`,
+        },
+      });
+
+      return { success: true };
+    },
+
     saveWitnessCard: async (data: {
       witnessProfileId: string;
       cardData: Record<string, any>;
