@@ -39,15 +39,15 @@ export default function AddTestimony() {
       console.log('Category:', category);
       console.log('Original message:', message.trim());
 
-      const baseUrl = process.env.EXPO_PUBLIC_RORK_API_BASE_URL;
-      if (!baseUrl) {
-        throw new Error('API base URL not configured');
-      }
-      
       console.log('Making request to backend API...');
       
+      const backendBaseUrl = process.env.EXPO_PUBLIC_TOOLKIT_URL;
+      if (!backendBaseUrl) {
+        throw new Error('Backend URL not configured');
+      }
+      
       const response = await axios.post(
-        `${baseUrl}/api/enhance-testimony`,
+        `${backendBaseUrl}/api/enhance-testimony`,
         {
           testimony: message.trim(),
           category,
