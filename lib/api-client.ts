@@ -1,11 +1,18 @@
 import axios from 'axios';
+import Constants from 'expo-constants';
 
-const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL;
-const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
+const SUPABASE_URL = Constants.expoConfig?.extra?.supabaseUrl || process.env.EXPO_PUBLIC_SUPABASE_URL || 'https://oqrxpfzcclwmsrwhmtiv.supabase.co';
+const SUPABASE_ANON_KEY = Constants.expoConfig?.extra?.supabaseAnonKey || process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9xcnhwZnpjY2x3bXNyd2htdGl2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjExNjE1MzAsImV4cCI6MjA3NjczNzUzMH0.4Qacs3C2o5AWvq4Eoa0bmGdrWgqJ5Z3qX1h4RufllsY';
+
+console.log('🔍 API Client Configuration:');
+console.log('SUPABASE_URL:', SUPABASE_URL);
+console.log('SUPABASE_ANON_KEY:', SUPABASE_ANON_KEY ? 'Present' : 'Missing');
 
 if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
   console.error('❌ Supabase credentials not configured!');
-  console.error('Please add SUPABASE_URL and SUPABASE_ANON_KEY to your .env file');
+  console.error('SUPABASE_URL:', SUPABASE_URL);
+  console.error('SUPABASE_ANON_KEY:', SUPABASE_ANON_KEY ? 'Present' : 'Missing');
+  throw new Error('Supabase credentials are required');
 }
 
 const supabaseClient = axios.create({
@@ -214,7 +221,7 @@ export const api = {
       testimony: string;
       category: string;
     }) => {
-      const geminiApiKey = process.env.EXPO_PUBLIC_GEMINI_API_KEY;
+      const geminiApiKey = Constants.expoConfig?.extra?.geminiApiKey || process.env.EXPO_PUBLIC_GEMINI_API_KEY || 'AIzaSyBfl_xh8vRqg-4cddEzCHtGYQKeKpS5usI';
 
       if (!geminiApiKey) {
         throw new Error('GEMINI_API_KEY is not configured');
@@ -287,7 +294,7 @@ Rewrite the testimony directly without any preamble or explanation.`;
       heard: string[];
       experienced: string[];
     }) => {
-      const geminiApiKey = process.env.EXPO_PUBLIC_GEMINI_API_KEY;
+      const geminiApiKey = Constants.expoConfig?.extra?.geminiApiKey || process.env.EXPO_PUBLIC_GEMINI_API_KEY || 'AIzaSyBfl_xh8vRqg-4cddEzCHtGYQKeKpS5usI';
 
       if (!geminiApiKey) {
         throw new Error('GEMINI_API_KEY is not configured');
