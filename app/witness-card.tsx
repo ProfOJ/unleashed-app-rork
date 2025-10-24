@@ -197,9 +197,8 @@ You can share your story too: #GoAndTell
 
 https://unleashed.vercel.app/witness/${userSlug}`;
 
-      await Clipboard.setStringAsync(shareMessage);
-
       if (Platform.OS === 'web') {
+        await Clipboard.setStringAsync(shareMessage);
         if (navigator.share) {
           await navigator.share({
             text: shareMessage,
@@ -210,54 +209,61 @@ https://unleashed.vercel.app/witness/${userSlug}`;
         return;
       }
 
+      const viewShotRef = viewShotRefs.current[currentThemeIndex];
+      if (!viewShotRef) {
+        Alert.alert('Error', 'Unable to capture image. Please try again.');
+        return;
+      }
+
+      const uri = await viewShotRef.capture?.();
+      if (!uri) {
+        Alert.alert('Error', 'Failed to capture image');
+        return;
+      }
+
+      const { status } = await MediaLibrary.requestPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission Required', 'Permission to access media library is required to share the image!');
+        return;
+      }
+
+      const asset = await MediaLibrary.createAssetAsync(uri);
+      await MediaLibrary.createAlbumAsync('Unleashed', asset, false);
+
+      await Clipboard.setStringAsync(shareMessage);
+
       Alert.alert(
-        'Message Copied!',
-        'The message has been copied to your clipboard. You can now share the image on your preferred social media platform and paste the copied text as caption or description.',
+        'Ready to Share! 🎉',
+        'The witness card has been saved to your gallery and the message copied to clipboard.\n\nShare the image on your social media and paste the copied text as your caption.',
         [
           {
-            text: 'Okay',
+            text: 'Open Share Menu',
             onPress: async () => {
               try {
-                const viewShotRef = viewShotRefs.current[currentThemeIndex];
-                if (!viewShotRef) {
-                  alert('Unable to capture image. Please try again.');
-                  return;
-                }
-
-                const uri = await viewShotRef.capture?.();
-                if (!uri) {
-                  alert('Failed to capture image');
-                  return;
-                }
-
-                const { status } = await MediaLibrary.requestPermissionsAsync();
-                if (status !== 'granted') {
-                  alert('Permission to access media library is required!');
-                  return;
-                }
-
-                const asset = await MediaLibrary.createAssetAsync(uri);
-                await MediaLibrary.createAlbumAsync('Unleashed', asset, false);
-
                 await Share.share({
                   url: uri,
                   message: shareMessage,
                 });
-
                 await markAsShared();
               } catch (error: any) {
                 if (error.message !== 'User did not share') {
-                  console.error('Error sharing image:', error);
-                  alert('Failed to share image. Please try again.');
+                  console.error('Error sharing:', error);
                 }
               }
             },
+          },
+          {
+            text: 'Done',
+            onPress: async () => {
+              await markAsShared();
+            },
+            style: 'cancel',
           },
         ]
       );
     } catch (error: any) {
       console.error('Error in share process:', error);
-      alert('Failed to copy message. Please try again.');
+      Alert.alert('Error', 'Failed to prepare share. Please try again.');
     }
   };
 

@@ -6,6 +6,7 @@ import { Camera } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
 import { api } from '@/lib/api-client';
 import {
+  Dimensions,
   Image,
   KeyboardAvoidingView,
   Platform,
@@ -27,6 +28,8 @@ const rolePlaceholders = [
   'Nurse at Korle-Bu',
   'Entrepreneur in Accra',
 ];
+
+const SCREEN_HEIGHT = Dimensions.get('window').height;
 
 export default function WizardStep1() {
   const router = useRouter();
@@ -298,7 +301,8 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.8)',
-    height: 140,
+    height: Math.max(SCREEN_HEIGHT * 0.22, 140),
+    maxHeight: 240,
   },
   photoPlaceholder: {
     flex: 1,
