@@ -14,7 +14,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import axios from 'axios';
+import { api } from '@/lib/api-client';
 
 export default function AddTestimony() {
   const router = useRouter();
@@ -39,44 +39,17 @@ export default function AddTestimony() {
       console.log('Category:', category);
       console.log('Original message:', message.trim());
 
-      console.log('Making request to backend API...');
-      
-      const backendBaseUrl = process.env.EXPO_PUBLIC_TOOLKIT_URL;
-      if (!backendBaseUrl) {
-        throw new Error('Backend URL not configured');
-      }
-      
-      const response = await axios.post(
-        `${backendBaseUrl}/api/enhance-testimony`,
-        {
-          testimony: message.trim(),
-          category,
-        },
-        {
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          timeout: 30000,
-        }
-      );
+      const result = await api.witness.enhanceTestimony({
+        testimony: message.trim(),
+        category,
+      });
 
-      console.log('Backend response received');
-      console.log('Response data:', JSON.stringify(response.data, null, 2));
-
-      let enhancedTestimony = message.trim();
-
-      if (response.data?.enhancedTestimony) {
-        enhancedTestimony = response.data.enhancedTestimony;
-        console.log('Enhanced testimony extracted:', enhancedTestimony);
-      } else {
-        console.log('Using original testimony, could not extract enhanced version');
-        console.log('Full response:', JSON.stringify(response.data, null, 2));
-      }
+      console.log('Enhanced testimony received:', result.enhancedTestimony);
 
       router.push({
         pathname: '/preview-testimony',
         params: {
-          message: enhancedTestimony,
+          message: result.enhancedTestimony,
           originalMessage: message.trim(),
           category,
           editId: params.editId,
@@ -86,14 +59,7 @@ export default function AddTestimony() {
       console.error('Error enhancing testimony:', error);
       console.error('Full error details:', {
         message: error.message,
-        status: error.response?.status,
-        statusText: error.response?.statusText,
-        url: error.config?.url,
-        method: error.config?.method,
-        baseURL: error.config?.baseURL,
-        data: error.response?.data,
-        headers: error.config?.headers,
-        requestData: error.config?.data,
+        stack: error.stack,
       });
       
       console.log('Enhancement failed, continuing with original testimony...');
