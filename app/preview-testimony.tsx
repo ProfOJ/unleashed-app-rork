@@ -48,13 +48,27 @@ export default function PreviewTestimony() {
     setSaving(true);
 
     try {
-      console.log('Saving testimony to localStorage...');
+      console.log('Saving testimony to Supabase...');
 
       const TESTIMONIES_KEY = '@unleashed_testimonies';
       const stored = await AsyncStorage.getItem(TESTIMONIES_KEY);
       const testimonies = stored ? JSON.parse(stored) : [];
 
       if (params.editId) {
+        console.log('Updating existing testimony:', params.editId);
+        
+        try {
+          await api.witness.updateTestimony({
+            testimonyId: params.editId,
+            enhancedMessage: params.message,
+            originalMessage: params.originalMessage || params.message,
+            category: params.category,
+          });
+          console.log('✅ Testimony updated in Supabase successfully');
+        } catch (error) {
+          console.error('❌ Failed to update testimony in Supabase:', error);
+        }
+
         const index = testimonies.findIndex((t: any) => t.id === params.editId);
         if (index !== -1) {
           testimonies[index] = {
@@ -63,12 +77,37 @@ export default function PreviewTestimony() {
             originalMessage: params.originalMessage || params.message,
             category: params.category,
           };
-          console.log('Testimony updated successfully');
+          console.log('Testimony updated in localStorage');
         }
       } else {
+        console.log('Creating new testimony in Supabase...');
+        
+        if (!userProfile.id) {
+          throw new Error('User profile ID is missing');
+        }
+        
+        let savedTestimony;
+        try {
+          savedTestimony = await api.witness.saveTestimony({
+            witnessProfileId: userProfile.id,
+            originalMessage: params.originalMessage || params.message,
+            enhancedMessage: params.message,
+            category: params.category,
+            tellOnline: false,
+            tellInPerson: false,
+            goWorkplace: false,
+            goSchool: false,
+            goNeighborhood: false,
+          });
+          console.log('✅ Testimony saved to Supabase successfully:', savedTestimony.id);
+        } catch (error) {
+          console.error('❌ Failed to save testimony to Supabase:', error);
+          throw error;
+        }
+
         const newTestimony = {
-          id: Date.now().toString(),
-          createdAt: new Date().toISOString(),
+          id: savedTestimony?.id || Date.now().toString(),
+          createdAt: savedTestimony?.createdAt || new Date().toISOString(),
           enhancedMessage: params.message,
           originalMessage: params.originalMessage || params.message,
           category: params.category,
@@ -79,7 +118,7 @@ export default function PreviewTestimony() {
           goNeighborhood: false,
         };
         testimonies.push(newTestimony);
-        console.log('Testimony saved successfully');
+        console.log('Testimony saved to localStorage');
 
         if (userProfile.id) {
           try {
@@ -93,18 +132,19 @@ export default function PreviewTestimony() {
               actionType,
               description: 'Created a new testimony',
             });
-            console.log('Points awarded for testimony');
+            console.log('✅ Points awarded for testimony');
           } catch (error) {
-            console.error('Failed to award points:', error);
+            console.error('❌ Failed to award points:', error);
           }
         }
       }
 
       await AsyncStorage.setItem(TESTIMONIES_KEY, JSON.stringify(testimonies));
+      console.log('✅ All save operations completed successfully');
       router.push('/dashboard');
     } catch (error) {
-      console.error('Error saving testimony:', error);
-      alert('Failed to save testimony. Please try again.');
+      console.error('❌ Error saving testimony:', error);
+      alert('Failed to save testimony to database. Please try again.');
     } finally {
       setSaving(false);
     }
