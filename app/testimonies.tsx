@@ -198,7 +198,7 @@ export default function Testimonies() {
     try {
       console.log('Starting image capture for:', testimony.name);
 
-      const testimonyText = `🙏 Testimony from ${testimony.name}\n\n${testimony.story}\n\nWhat I've Seen:\n${testimony.seen.map(s => `• ${s}`).join('\n')}\n\nWhat I've Heard:\n${testimony.heard.map(h => `• ${h}`).join('\n')}\n\nWhat I've Experienced:\n${testimony.experienced.map(e => `• ${e}`).join('\n')}\n\n#GoAndTell #Unleashed\n\nView more testimonies at: https://unleashed.vercel.app/testimonies`;
+      const testimonyText = `🙏 Testimony from ${testimony.name}\n\n${testimony.story}\n\nWhat I've Seen:\n${testimony.seen.map(s => `• ${s}`).join('\n')}\n\nWhat I've Heard:\n${testimony.heard.map(h => `• ${h}`).join('\n')}\n\nWhat I've Experienced:\n${testimony.experienced.map(e => `• ${e}`).join('\n')}\n\n#NYWC25 | #GoAndTell | #PossessingTheNations | #TellThemShowThem | #ProfOJ | @profoj.tech\n\nView more testimonies at: https://unleashed.vercel.app/testimonies`;
 
       console.log('Copying testimony text to clipboard...');
       await Clipboard.setStringAsync(testimonyText);

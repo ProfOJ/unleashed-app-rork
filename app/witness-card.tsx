@@ -206,7 +206,9 @@ I'm ${userProfile?.name}, ${userProfile?.role}
 
 Here's what I have seen, heard and experienced in Christ.
 
-You can share your story too: #GoAndTell
+You can share your story too!
+
+#NYWC25 | #GoAndTell | #PossessingTheNations | #TellThemShowThem | #ProfOJ | @profoj.tech
 
 https://unleashed.vercel.app/witness/${userSlug}`;
 

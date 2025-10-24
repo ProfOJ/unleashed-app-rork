@@ -154,7 +154,7 @@ export default function PreviewTestimony() {
     try {
       console.log('Starting testimony share...');
 
-      const testimonyText = `🙏 ${userProfile?.name || 'Anonymous'}'s Testimony\n\n${categoryLabels[params.category]}\n\n${params.message}\n\n#GoAndTell #Unleashed\n\nView more testimonies at: https://unleashed.vercel.app/testimonies`;
+      const testimonyText = `🙏 ${userProfile?.name || 'Anonymous'}'s Testimony\n\n${categoryLabels[params.category]}\n\n${params.message}\n\n#NYWC25 | #GoAndTell | #PossessingTheNations | #TellThemShowThem | #ProfOJ | @profoj.tech\n\nView more testimonies at: https://unleashed.vercel.app/testimonies`;
 
       console.log('Copying testimony text to clipboard...');
       await Clipboard.setStringAsync(testimonyText);
