@@ -43,6 +43,7 @@ supabaseClient.interceptors.response.use(
 export const api = {
   witness: {
     saveProfile: async (data: {
+      id?: string;
       name: string;
       contact: string;
       role: string;
@@ -51,7 +52,7 @@ export const api = {
       district?: string;
       assembly?: string;
     }) => {
-      const response = await supabaseClient.post('/witness_profiles', {
+      const profileData = {
         name: data.name,
         contact: data.contact,
         role: data.role,
@@ -59,7 +60,24 @@ export const api = {
         country: data.country || null,
         district: data.district || null,
         assembly: data.assembly || null,
-      });
+      };
+
+      let response;
+      if (data.id) {
+        // Update existing profile
+        response = await supabaseClient.patch(
+          '/witness_profiles',
+          profileData,
+          {
+            params: {
+              id: `eq.${data.id}`,
+            },
+          }
+        );
+      } else {
+        // Create new profile
+        response = await supabaseClient.post('/witness_profiles', profileData);
+      }
 
       const profile = response.data[0];
       return {

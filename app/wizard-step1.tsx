@@ -73,14 +73,16 @@ export default function WizardStep1() {
 
     try {
       console.log('Saving profile to database...');
+      const isUpdate = !!userProfile?.id;
       const savedProfile = await api.witness.saveProfile({
+        id: userProfile?.id,
         name,
         contact: phone,
         role,
         photoUri,
       });
 
-      console.log('Profile saved with ID:', savedProfile.id);
+      console.log(isUpdate ? 'Profile updated with ID:' : 'Profile created with ID:', savedProfile.id);
 
       updateUserProfile({
         id: savedProfile.id,
@@ -90,7 +92,11 @@ export default function WizardStep1() {
         photoUri,
       });
 
-      router.push('/wizard-step2' as any);
+      if (isUpdate) {
+        router.push('/dashboard' as any);
+      } else {
+        router.push('/wizard-step2' as any);
+      }
     } catch (error: any) {
       console.error('Error saving profile:', error);
       console.error('Full error details:', {
@@ -213,7 +219,7 @@ export default function WizardStep1() {
               activeOpacity={0.8}
             >
               <Text style={styles.buttonText}>
-                {isSaving ? 'Saving...' : 'Generate My Witness Card'}
+                {isSaving ? 'Saving...' : (userProfile?.id ? 'Save' : 'Generate My Witness Card')}
               </Text>
             </TouchableOpacity>
 
