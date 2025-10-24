@@ -228,7 +228,10 @@ https://unleashed.vercel.app/witness/${userSlug}`;
         return;
       }
 
+      console.log('Capturing witness card image...');
       const uri = await viewShotRef.capture?.();
+      console.log('Captured URI:', uri);
+      
       if (!uri) {
         Alert.alert('Error', 'Failed to capture image');
         return;
@@ -240,8 +243,10 @@ https://unleashed.vercel.app/witness/${userSlug}`;
         return;
       }
 
+      console.log('Saving to gallery...');
       const asset = await MediaLibrary.createAssetAsync(uri);
       await MediaLibrary.createAlbumAsync('Unleashed', asset, false);
+      console.log('Saved to gallery:', asset.uri);
 
       await Clipboard.setStringAsync(shareMessage);
 
@@ -253,13 +258,23 @@ https://unleashed.vercel.app/witness/${userSlug}`;
             text: 'Open Share Menu',
             onPress: async () => {
               try {
-                await Share.share({
-                  url: uri,
-                });
+                console.log('Opening share menu with URI:', asset.uri);
+                if (Platform.OS === 'ios') {
+                  await Share.share({
+                    url: asset.uri,
+                    message: shareMessage,
+                  });
+                } else {
+                  await Share.share({
+                    message: shareMessage,
+                    url: asset.uri,
+                  });
+                }
                 await markAsShared();
               } catch (error: any) {
                 if (error.message !== 'User did not share') {
                   console.error('Error sharing:', error);
+                  Alert.alert('Share Error', error.message || 'Failed to share');
                 }
               }
             },
@@ -275,7 +290,7 @@ https://unleashed.vercel.app/witness/${userSlug}`;
       );
     } catch (error: any) {
       console.error('Error in share process:', error);
-      Alert.alert('Error', 'Failed to prepare share. Please try again.');
+      Alert.alert('Error', `Failed to prepare share: ${error.message || 'Unknown error'}`);
     }
   };
 
