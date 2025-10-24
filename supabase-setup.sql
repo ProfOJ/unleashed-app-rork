@@ -82,6 +82,28 @@ CREATE TABLE IF NOT EXISTS point_transactions (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- Create churches table
+CREATE TABLE IF NOT EXISTS churches (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name TEXT NOT NULL,
+  district TEXT NOT NULL,
+  area TEXT NOT NULL,
+  country TEXT NOT NULL,
+  witnesses_count INTEGER DEFAULT 0,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  UNIQUE(name, district, country)
+);
+
+-- Create witness_churches table for linking profiles to churches
+CREATE TABLE IF NOT EXISTS witness_churches (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  witness_profile_id UUID NOT NULL REFERENCES witness_profiles(id) ON DELETE CASCADE,
+  church_id UUID NOT NULL REFERENCES churches(id) ON DELETE CASCADE,
+  joined_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  UNIQUE(witness_profile_id, church_id)
+);
+
 -- Create indexes for better query performance
 CREATE INDEX IF NOT EXISTS idx_testimonies_witness_profile_id ON testimonies(witness_profile_id);
 CREATE INDEX IF NOT EXISTS idx_testimonies_created_at ON testimonies(created_at DESC);
@@ -99,6 +121,13 @@ CREATE INDEX IF NOT EXISTS idx_user_points_total_points ON user_points(total_poi
 CREATE INDEX IF NOT EXISTS idx_point_transactions_witness_profile_id ON point_transactions(witness_profile_id);
 CREATE INDEX IF NOT EXISTS idx_point_transactions_created_at ON point_transactions(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_point_transactions_action_type ON point_transactions(action_type);
+
+CREATE INDEX IF NOT EXISTS idx_churches_country ON churches(country);
+CREATE INDEX IF NOT EXISTS idx_churches_district ON churches(district);
+CREATE INDEX IF NOT EXISTS idx_churches_name ON churches(name);
+
+CREATE INDEX IF NOT EXISTS idx_witness_churches_witness_profile_id ON witness_churches(witness_profile_id);
+CREATE INDEX IF NOT EXISTS idx_witness_churches_church_id ON witness_churches(church_id);
 
 -- Create updated_at trigger function
 CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -125,6 +154,9 @@ CREATE TRIGGER update_witness_cards_updated_at BEFORE UPDATE ON witness_cards FO
 DROP TRIGGER IF EXISTS update_user_points_updated_at ON user_points;
 CREATE TRIGGER update_user_points_updated_at BEFORE UPDATE ON user_points FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_churches_updated_at ON churches;
+CREATE TRIGGER update_churches_updated_at BEFORE UPDATE ON churches FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
 -- Enable Row Level Security (RLS)
 ALTER TABLE witness_profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE testimonies ENABLE ROW LEVEL SECURITY;
@@ -132,6 +164,8 @@ ALTER TABLE souls ENABLE ROW LEVEL SECURITY;
 ALTER TABLE witness_cards ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_points ENABLE ROW LEVEL SECURITY;
 ALTER TABLE point_transactions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE churches ENABLE ROW LEVEL SECURITY;
+ALTER TABLE witness_churches ENABLE ROW LEVEL SECURITY;
 
 -- Drop existing policies if they exist
 DROP POLICY IF EXISTS "Allow all operations on witness_profiles" ON witness_profiles;
@@ -140,6 +174,8 @@ DROP POLICY IF EXISTS "Allow all operations on souls" ON souls;
 DROP POLICY IF EXISTS "Allow all operations on witness_cards" ON witness_cards;
 DROP POLICY IF EXISTS "Allow all operations on user_points" ON user_points;
 DROP POLICY IF EXISTS "Allow all operations on point_transactions" ON point_transactions;
+DROP POLICY IF EXISTS "Allow all operations on churches" ON churches;
+DROP POLICY IF EXISTS "Allow all operations on witness_churches" ON witness_churches;
 
 -- Create policies to allow all operations (customize these for production)
 CREATE POLICY "Allow all operations on witness_profiles" ON witness_profiles FOR ALL USING (true) WITH CHECK (true);
@@ -148,3 +184,5 @@ CREATE POLICY "Allow all operations on souls" ON souls FOR ALL USING (true) WITH
 CREATE POLICY "Allow all operations on witness_cards" ON witness_cards FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Allow all operations on user_points" ON user_points FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Allow all operations on point_transactions" ON point_transactions FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Allow all operations on churches" ON churches FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Allow all operations on witness_churches" ON witness_churches FOR ALL USING (true) WITH CHECK (true);

@@ -1,9 +1,9 @@
 import { colors } from '@/constants/colors';
 import { useWitness } from '@/contexts/WitnessContext';
-import { churchData } from '@/mocks/churches';
+import { api } from '@/lib/api-client';
 import { useRouter } from 'expo-router';
 import { ArrowLeft, Church as ChurchIcon, Search, Plus, Users, MapPin } from 'lucide-react-native';
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   ScrollView,
   StyleSheet,
@@ -12,11 +12,13 @@ import {
   TouchableOpacity,
   View,
   Modal,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 type Church = {
+  id?: string;
   name: string;
   district: string;
   area: string;
@@ -30,7 +32,6 @@ type StoredChurch = {
 };
 
 const CHURCH_STORAGE_KEY = '@selected_church';
-const CUSTOM_CHURCHES_KEY = '@custom_churches';
 
 export default function FindChurchScreen() {
   const router = useRouter();
@@ -39,7 +40,9 @@ export default function FindChurchScreen() {
   const [selectedChurch, setSelectedChurch] = useState<Church | null>(null);
   const [showDropdown, setShowDropdown] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
-  const [customChurches, setCustomChurches] = useState<Church[]>([]);
+  const [filteredChurches, setFilteredChurches] = useState<Church[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   
   const [newChurch, setNewChurch] = useState({
     name: '',
@@ -50,8 +53,52 @@ export default function FindChurchScreen() {
 
   useEffect(() => {
     loadSelectedChurch();
-    loadCustomChurches();
   }, []);
+
+  useEffect(() => {
+    const searchChurchesDebounced = async () => {
+      if (!searchQuery.trim()) {
+        setFilteredChurches([]);
+        setShowDropdown(false);
+        return;
+      }
+
+      try {
+        setIsSearching(true);
+        console.log('🔍 Searching churches:', searchQuery);
+        const results = await api.churches.searchChurches(searchQuery);
+        console.log('✅ Search results:', results);
+        
+        const mapped = results.map((c: any) => ({
+          id: c.id,
+          name: c.name,
+          district: c.district,
+          area: c.area,
+          country: c.country,
+          witnesses: c.witnessesCount,
+        }));
+        
+        setFilteredChurches(mapped);
+        setShowDropdown(true);
+      } catch (error: any) {
+        console.error('❌ Error searching churches:', error);
+        console.error('Full error details:', {
+          message: error.message,
+          response: error.response?.data,
+          status: error.response?.status,
+        });
+        setFilteredChurches([]);
+      } finally {
+        setIsSearching(false);
+      }
+    };
+
+    const timer = setTimeout(() => {
+      searchChurchesDebounced();
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   const loadSelectedChurch = async () => {
     try {
@@ -65,58 +112,7 @@ export default function FindChurchScreen() {
     }
   };
 
-  const loadCustomChurches = async () => {
-    try {
-      const stored = await AsyncStorage.getItem(CUSTOM_CHURCHES_KEY);
-      if (stored) {
-        setCustomChurches(JSON.parse(stored));
-      }
-    } catch (error) {
-      console.error('Failed to load custom churches:', error);
-    }
-  };
 
-  const saveCustomChurches = async (churches: Church[]) => {
-    try {
-      await AsyncStorage.setItem(CUSTOM_CHURCHES_KEY, JSON.stringify(churches));
-    } catch (error) {
-      console.error('Failed to save custom churches:', error);
-    }
-  };
-
-  const allChurches = useMemo(() => {
-    const churches: Church[] = [];
-    
-    Object.entries(churchData.countries).forEach(([country, countryData]) => {
-      Object.entries(countryData.districts).forEach(([district, assemblies]) => {
-        assemblies.forEach((assembly) => {
-          churches.push({
-            name: assembly,
-            district: district,
-            area: district,
-            country: country,
-            witnesses: Math.floor(Math.random() * 150) + 10,
-          });
-        });
-      });
-    });
-    
-    return [...churches, ...customChurches];
-  }, [customChurches]);
-
-  const filteredChurches = useMemo(() => {
-    if (!searchQuery.trim()) return [];
-    
-    const query = searchQuery.toLowerCase();
-    return allChurches
-      .filter(
-        (church) =>
-          church.name.toLowerCase().includes(query) ||
-          church.district.toLowerCase().includes(query) ||
-          church.country.toLowerCase().includes(query)
-      )
-      .slice(0, 10);
-  }, [searchQuery, allChurches]);
 
   const handleSelectChurch = async (church: Church) => {
     setSelectedChurch(church);
@@ -136,8 +132,17 @@ export default function FindChurchScreen() {
         district: church.district,
         assembly: church.name,
       });
+
+      if (userProfile?.id && church.id) {
+        console.log('🔗 Linking profile to church:', userProfile.id, church.id);
+        await api.churches.linkProfileToChurch({
+          witnessProfileId: userProfile.id,
+          churchId: church.id,
+        });
+        console.log('✅ Profile linked to church successfully');
+      }
     } catch (error) {
-      console.error('Failed to save church:', error);
+      console.error('❌ Error selecting church:', error);
     }
   };
 
@@ -146,18 +151,41 @@ export default function FindChurchScreen() {
       return;
     }
 
-    const church: Church = {
-      ...newChurch,
-      witnesses: 1,
-    };
+    try {
+      setIsSaving(true);
+      console.log('💾 Saving new church:', newChurch);
+      
+      const savedChurch = await api.churches.saveChurch({
+        name: newChurch.name,
+        district: newChurch.district,
+        area: newChurch.area,
+        country: newChurch.country,
+      });
 
-    const updatedChurches = [...customChurches, church];
-    setCustomChurches(updatedChurches);
-    await saveCustomChurches(updatedChurches);
-    
-    setShowAddModal(false);
-    setNewChurch({ name: '', district: '', area: '', country: '' });
-    handleSelectChurch(church);
+      console.log('✅ Church saved successfully:', savedChurch);
+
+      const church: Church = {
+        id: savedChurch.id,
+        name: savedChurch.name,
+        district: savedChurch.district,
+        area: savedChurch.area,
+        country: savedChurch.country,
+        witnesses: savedChurch.witnessesCount,
+      };
+
+      setShowAddModal(false);
+      setNewChurch({ name: '', district: '', area: '', country: '' });
+      await handleSelectChurch(church);
+    } catch (error: any) {
+      console.error('❌ Error adding church:', error);
+      console.error('Full error details:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+      });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleSearchFocus = () => {
@@ -168,7 +196,6 @@ export default function FindChurchScreen() {
 
   const handleSearchChange = (text: string) => {
     setSearchQuery(text);
-    setShowDropdown(text.trim().length > 0);
   };
 
   return (
@@ -204,7 +231,11 @@ export default function FindChurchScreen() {
           {!selectedChurch && (
             <View style={styles.searchSection}>
               <View style={styles.searchContainer}>
-                <Search size={20} color={colors.text.secondary} />
+                {isSearching ? (
+                  <ActivityIndicator size="small" color={colors.accent} />
+                ) : (
+                  <Search size={20} color={colors.text.secondary} />
+                )}
                 <TextInput
                   style={styles.searchInput}
                   placeholder="Search for your church..."
@@ -224,7 +255,7 @@ export default function FindChurchScreen() {
                   >
                     {filteredChurches.map((church, index) => (
                       <TouchableOpacity
-                        key={`${church.name}-${index}`}
+                        key={`${church.id}-${index}`}
                         style={styles.dropdownItem}
                         onPress={() => handleSelectChurch(church)}
                         activeOpacity={0.7}
@@ -250,9 +281,10 @@ export default function FindChurchScreen() {
                 </View>
               )}
 
-              {showDropdown && searchQuery.trim() && filteredChurches.length === 0 && (
+              {showDropdown && searchQuery.trim() && filteredChurches.length === 0 && !isSearching && (
                 <View style={styles.noResults}>
                   <Text style={styles.noResultsText}>No churches found</Text>
+                  <Text style={styles.noResultsSubtext}>Try adding your church below</Text>
                 </View>
               )}
 
@@ -379,6 +411,7 @@ export default function FindChurchScreen() {
                   setShowAddModal(false);
                   setNewChurch({ name: '', district: '', area: '', country: '' });
                 }}
+                disabled={isSaving}
                 activeOpacity={0.7}
               >
                 <Text style={styles.modalButtonTextCancel}>Cancel</Text>
@@ -388,14 +421,18 @@ export default function FindChurchScreen() {
                 style={[
                   styles.modalButton,
                   styles.modalButtonAdd,
-                  (!newChurch.name || !newChurch.district || !newChurch.area || !newChurch.country) &&
+                  (!newChurch.name || !newChurch.district || !newChurch.area || !newChurch.country || isSaving) &&
                     styles.modalButtonDisabled,
                 ]}
                 onPress={handleAddChurch}
-                disabled={!newChurch.name || !newChurch.district || !newChurch.area || !newChurch.country}
+                disabled={!newChurch.name || !newChurch.district || !newChurch.area || !newChurch.country || isSaving}
                 activeOpacity={0.7}
               >
-                <Text style={styles.modalButtonTextAdd}>Add Church</Text>
+                {isSaving ? (
+                  <ActivityIndicator size="small" color={colors.white} />
+                ) : (
+                  <Text style={styles.modalButtonTextAdd}>Add Church</Text>
+                )}
               </TouchableOpacity>
             </View>
           </View>
@@ -534,6 +571,11 @@ const styles = StyleSheet.create({
   noResultsText: {
     fontSize: 16,
     color: colors.text.secondary,
+    marginBottom: 4,
+  },
+  noResultsSubtext: {
+    fontSize: 14,
+    color: colors.text.light,
   },
   addButton: {
     flexDirection: 'row',

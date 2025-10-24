@@ -602,6 +602,153 @@ Just write the witness card message directly, no explanations.`;
     },
   },
 
+  churches: {
+    saveChurch: async (data: {
+      name: string;
+      district: string;
+      area: string;
+      country: string;
+    }) => {
+      const response = await supabaseClient.post('/churches', {
+        name: data.name,
+        district: data.district,
+        area: data.area,
+        country: data.country,
+        witnesses_count: 0,
+      });
+
+      const church = response.data[0];
+      return {
+        id: church.id,
+        name: church.name,
+        district: church.district,
+        area: church.area,
+        country: church.country,
+        witnessesCount: church.witnesses_count,
+        createdAt: church.created_at,
+      };
+    },
+
+    searchChurches: async (query: string) => {
+      const ilike = `%${query}%`;
+      const response = await supabaseClient.get('/churches', {
+        params: {
+          or: `name.ilike.${ilike},district.ilike.${ilike},country.ilike.${ilike}`,
+          order: 'witnesses_count.desc,name.asc',
+          limit: 50,
+        },
+      });
+
+      return response.data.map((c: any) => ({
+        id: c.id,
+        name: c.name,
+        district: c.district,
+        area: c.area,
+        country: c.country,
+        witnessesCount: c.witnesses_count,
+        createdAt: c.created_at,
+      }));
+    },
+
+    getChurch: async (churchId: string) => {
+      const response = await supabaseClient.get('/churches', {
+        params: {
+          id: `eq.${churchId}`,
+        },
+      });
+
+      const church = response.data[0];
+      if (!church) {
+        throw new Error('Church not found');
+      }
+
+      return {
+        id: church.id,
+        name: church.name,
+        district: church.district,
+        area: church.area,
+        country: church.country,
+        witnessesCount: church.witnesses_count,
+        createdAt: church.created_at,
+      };
+    },
+
+    linkProfileToChurch: async (data: {
+      witnessProfileId: string;
+      churchId: string;
+    }) => {
+      const checkResponse = await supabaseClient.get('/witness_churches', {
+        params: {
+          witness_profile_id: `eq.${data.witnessProfileId}`,
+          church_id: `eq.${data.churchId}`,
+        },
+      });
+
+      if (checkResponse.data.length > 0) {
+        return {
+          id: checkResponse.data[0].id,
+          witnessProfileId: checkResponse.data[0].witness_profile_id,
+          churchId: checkResponse.data[0].church_id,
+          joinedAt: checkResponse.data[0].joined_at,
+        };
+      }
+
+      const response = await supabaseClient.post('/witness_churches', {
+        witness_profile_id: data.witnessProfileId,
+        church_id: data.churchId,
+      });
+
+      const churchResponse = await supabaseClient.get('/churches', {
+        params: {
+          id: `eq.${data.churchId}`,
+        },
+      });
+
+      const currentChurch = churchResponse.data[0];
+      if (currentChurch) {
+        await supabaseClient.patch(
+          '/churches',
+          { witnesses_count: currentChurch.witnesses_count + 1 },
+          {
+            params: {
+              id: `eq.${data.churchId}`,
+            },
+          }
+        );
+      }
+
+      const link = response.data[0];
+      return {
+        id: link.id,
+        witnessProfileId: link.witness_profile_id,
+        churchId: link.church_id,
+        joinedAt: link.joined_at,
+      };
+    },
+
+    getProfileChurches: async (witnessProfileId: string) => {
+      const response = await supabaseClient.get('/witness_churches', {
+        params: {
+          witness_profile_id: `eq.${witnessProfileId}`,
+          select: 'id,joined_at,churches(id,name,district,area,country,witnesses_count)',
+        },
+      });
+
+      return response.data.map((wc: any) => ({
+        linkId: wc.id,
+        joinedAt: wc.joined_at,
+        church: {
+          id: wc.churches.id,
+          name: wc.churches.name,
+          district: wc.churches.district,
+          area: wc.churches.area,
+          country: wc.churches.country,
+          witnessesCount: wc.churches.witnesses_count,
+        },
+      }));
+    },
+  },
+
   test: {
     runTests: async () => {
       const results: any[] = [];
