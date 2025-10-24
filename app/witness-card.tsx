@@ -100,6 +100,7 @@ export default function WitnessCard() {
   const [currentThemeIndex, setCurrentThemeIndex] = useState(0);
   const [hasShared, setHasShared] = useState(false);
   const [witnessCard, setWitnessCard] = useState<WitnessCardData | null>(null);
+  const [isViewingExisting, setIsViewingExisting] = useState(false);
   const scrollX = useRef(new Animated.Value(0)).current;
   const scrollViewRef = useRef<ScrollView>(null);
   const viewShotRefs = useRef<(ViewShot | null)[]>([]);
@@ -109,6 +110,7 @@ export default function WitnessCard() {
   useEffect(() => {
     checkSharedStatus();
     loadWitnessCard();
+    checkIfViewingExisting();
   }, []);
 
   const loadWitnessCard = async () => {
@@ -135,6 +137,17 @@ export default function WitnessCard() {
       }
     } catch (error) {
       console.error('Failed to check shared status:', error);
+    }
+  };
+
+  const checkIfViewingExisting = async () => {
+    try {
+      const stored = await AsyncStorage.getItem(WITNESS_CARD_KEY);
+      if (stored) {
+        setIsViewingExisting(true);
+      }
+    } catch (error) {
+      console.error('Failed to check existing card:', error);
     }
   };
 
@@ -268,7 +281,9 @@ https://unleashed.vercel.app/witness/${userSlug}`;
   };
 
   const handleButtonPress = () => {
-    if (hasShared) {
+    if (isViewingExisting) {
+      handleShareImage();
+    } else if (hasShared) {
       router.push('/dashboard');
     } else {
       handleShareImage();
@@ -552,13 +567,15 @@ https://unleashed.vercel.app/witness/${userSlug}`;
           onPress={handleButtonPress}
           activeOpacity={0.8}
         >
-          {hasShared ? (
+          {isViewingExisting ? (
+            <Share2 size={20} color={colors.white} />
+          ) : hasShared ? (
             <ArrowRight size={20} color={colors.white} />
           ) : (
             <Share2 size={20} color={colors.white} />
           )}
           <Text style={styles.shareButtonText}>
-            {hasShared ? 'Go to Dashboard' : 'Share Witness Card'}
+            {isViewingExisting ? 'Share' : hasShared ? 'Go to Dashboard' : 'Share Witness Card'}
           </Text>
         </TouchableOpacity>
 
