@@ -633,7 +633,7 @@ Just write the witness card message directly, no explanations.`;
       const ilike = `%${query}%`;
       const response = await supabaseClient.get('/churches', {
         params: {
-          or: `name.ilike.${ilike},district.ilike.${ilike},country.ilike.${ilike}`,
+          or: `(name.ilike.${ilike},district.ilike.${ilike},country.ilike.${ilike})`,
           order: 'witnesses_count.desc,name.asc',
           limit: 50,
         },
