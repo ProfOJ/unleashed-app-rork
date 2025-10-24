@@ -4,10 +4,11 @@ import * as MediaLibrary from 'expo-media-library';
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import * as Clipboard from 'expo-clipboard';
-import { ArrowLeft, BookOpen, Hand, MessageSquare, Plus, Share2 } from 'lucide-react-native';
+import { ArrowLeft, BookOpen, Heart, MessageSquare, Plus, Share2 } from 'lucide-react-native';
 import React, { useRef, useState, useMemo, useEffect, useCallback } from 'react';
 import { useWitness } from '@/contexts/WitnessContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { api } from '@/lib/api-client';
 
 import { MOCK_TESTIMONIES } from '@/mocks/testimonies';
 import {
@@ -50,6 +51,7 @@ export default function Testimonies() {
   const [clapAnimations, setClapAnimations] = useState<{ [key: string]: Animated.Value }>({});
   const [clapCounts, setClapCounts] = useState<{ [key: string]: number }>({});
   const [userTestimonies, setUserTestimonies] = useState<Testimony[]>([]);
+  const [dbTestimonies, setDbTestimonies] = useState<Testimony[]>([]);
 
   const TESTIMONIES_KEY = '@unleashed_testimonies';
   const CLAPS_KEY = '@unleashed_claps';
@@ -74,12 +76,44 @@ export default function Testimonies() {
           isLocal: true,
         }));
         setUserTestimonies(formattedTestimonies);
-        console.log('Loaded user testimonies:', formattedTestimonies.length);
+        console.log('Loaded user testimonies from AsyncStorage:', formattedTestimonies.length);
       }
     } catch (error) {
       console.error('Error loading user testimonies:', error);
     }
   }, [userProfile?.name, userProfile?.role, userProfile?.photoUri]);
+
+  const loadDbTestimonies = useCallback(async () => {
+    try {
+      if (!userProfile?.id) {
+        console.log('No user profile ID, skipping DB testimonies load');
+        return;
+      }
+
+      console.log('Loading testimonies from database for profile:', userProfile.id);
+      const testimonies = await api.witness.getTestimonies(userProfile.id);
+      
+      const formattedTestimonies: Testimony[] = testimonies.map((t: any) => ({
+        id: t.id,
+        name: userProfile.name || 'Anonymous',
+        role: userProfile.role || 'Witness',
+        photoUri: userProfile.photoUri || 'https://i.pravatar.cc/150?img=50',
+        story: t.enhancedMessage || t.originalMessage,
+        seen: t.category === 'seen' ? [t.originalMessage] : [],
+        heard: t.category === 'heard' ? [t.originalMessage] : [],
+        experienced: t.category === 'experienced' ? [t.originalMessage] : [],
+        claps: 0,
+        slug: `testimony-${t.id}`,
+        createdAt: t.createdAt,
+        isLocal: false,
+      }));
+      
+      setDbTestimonies(formattedTestimonies);
+      console.log('Loaded testimonies from database:', formattedTestimonies.length);
+    } catch (error) {
+      console.error('Error loading DB testimonies:', error);
+    }
+  }, [userProfile?.id, userProfile?.name, userProfile?.role, userProfile?.photoUri]);
 
   const loadClaps = useCallback(async () => {
     try {
@@ -94,8 +128,9 @@ export default function Testimonies() {
 
   useEffect(() => {
     loadUserTestimonies();
+    loadDbTestimonies();
     loadClaps();
-  }, [loadUserTestimonies, loadClaps]);
+  }, [loadUserTestimonies, loadDbTestimonies, loadClaps]);
 
   const saveClaps = async (claps: { [key: string]: number }) => {
     try {
@@ -106,17 +141,22 @@ export default function Testimonies() {
   };
 
   const testimonies = useMemo(() => {
-    const combined = [...userTestimonies, ...MOCK_TESTIMONIES];
+    const combined = [...dbTestimonies, ...userTestimonies, ...MOCK_TESTIMONIES];
     console.log('Combined testimonies count:', combined.length);
-    console.log('User testimonies count:', userTestimonies.length);
+    console.log('DB testimonies count:', dbTestimonies.length);
+    console.log('AsyncStorage testimonies count:', userTestimonies.length);
     console.log('Mock testimonies count:', MOCK_TESTIMONIES.length);
     
-    return combined.sort((a, b) => {
+    const uniqueTestimonies = combined.filter((testimony, index, self) => 
+      index === self.findIndex((t) => t.id === testimony.id)
+    );
+    
+    return uniqueTestimonies.sort((a, b) => {
       const dateA = new Date(a.createdAt).getTime();
       const dateB = new Date(b.createdAt).getTime();
       return dateB - dateA;
     });
-  }, [userTestimonies]);
+  }, [dbTestimonies, userTestimonies]);
 
   useEffect(() => {
     const newAnimations: { [key: string]: Animated.Value } = {};
@@ -380,7 +420,7 @@ export default function Testimonies() {
                       },
                     ]}
                   >
-                    <Hand size={20} color={colors.secondary} />
+                    <Heart size={20} color={colors.secondary} />
                     <Text style={styles.actionText}>{clapCounts[testimony.id] || testimony.claps}</Text>
                   </Animated.View>
                 </TouchableOpacity>
