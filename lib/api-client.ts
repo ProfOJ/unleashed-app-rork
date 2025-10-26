@@ -178,6 +178,33 @@ export const api = {
       }));
     },
 
+    getAllTestimonies: async () => {
+      const response = await supabaseClient.get('/testimonies', {
+        params: {
+          select: '*, witness_profiles(name, role, photo_uri)',
+          order: 'created_at.desc',
+          limit: 100,
+        },
+      });
+
+      return response.data.map((t: any) => ({
+        id: t.id,
+        witnessProfileId: t.witness_profile_id,
+        category: t.category,
+        originalMessage: t.original_message,
+        enhancedMessage: t.enhanced_message,
+        tellOnline: t.tell_online,
+        tellInPerson: t.tell_in_person,
+        goWorkplace: t.go_workplace,
+        goSchool: t.go_school,
+        goNeighborhood: t.go_neighborhood,
+        createdAt: t.created_at,
+        name: t.witness_profiles?.name || 'Anonymous',
+        role: t.witness_profiles?.role || 'Witness',
+        photoUri: t.witness_profiles?.photo_uri || 'https://i.pravatar.cc/150?img=50',
+      }));
+    },
+
     deleteTestimony: async (testimonyId: string) => {
       await supabaseClient.delete('/testimonies', {
         params: {

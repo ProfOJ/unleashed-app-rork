@@ -327,18 +327,6 @@ export default function Dashboard() {
               </TouchableOpacity>
               
               <TouchableOpacity
-                style={styles.menuItem}
-                onPress={() => {
-                  setMenuVisible(false);
-                  router.push('/test-supabase');
-                }}
-                activeOpacity={0.7}
-              >
-                <Text style={styles.menuItemText}>Test Database</Text>
-                <ChevronRight size={20} color={colors.text.secondary} />
-              </TouchableOpacity>
-              
-              <TouchableOpacity
                 style={[styles.menuItem, styles.signOutItem]}
                 onPress={() => handleSignOut()}
                 activeOpacity={0.7}

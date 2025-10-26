@@ -1,6 +1,6 @@
 import { colors } from '@/constants/colors';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { ArrowLeft, Plus } from 'lucide-react-native';
+import { ArrowLeft, Plus, CheckSquare, Square } from 'lucide-react-native';
 import React, { useState } from 'react';
 import {
   ActivityIndicator,
@@ -23,6 +23,7 @@ export default function AddTestimony() {
   const [category, setCategory] = useState<'seen' | 'heard' | 'experienced' | null>(
     (params.category as 'seen' | 'heard' | 'experienced') || null
   );
+  const [enhanceStory, setEnhanceStory] = useState(true);
   const [isEnhancing, setIsEnhancing] = useState(false);
   const isEditing = !!params.editId;
 
@@ -35,21 +36,28 @@ export default function AddTestimony() {
     setIsEnhancing(true);
 
     try {
-      console.log('Enhancing testimony...');
-      console.log('Category:', category);
-      console.log('Original message:', message.trim());
+      let enhancedMessage = message.trim();
 
-      const result = await api.witness.enhanceTestimony({
-        testimony: message.trim(),
-        category,
-      });
+      if (enhanceStory) {
+        console.log('Enhancing testimony...');
+        console.log('Category:', category);
+        console.log('Original message:', message.trim());
 
-      console.log('Enhanced testimony received:', result.enhancedTestimony);
+        const result = await api.witness.enhanceTestimony({
+          testimony: message.trim(),
+          category,
+        });
+
+        console.log('Enhanced testimony received:', result.enhancedTestimony);
+        enhancedMessage = result.enhancedTestimony;
+      } else {
+        console.log('Skipping enhancement as per user preference');
+      }
 
       router.push({
         pathname: '/preview-testimony',
         params: {
-          message: result.enhancedTestimony,
+          message: enhancedMessage,
           originalMessage: message.trim(),
           category,
           editId: params.editId,
@@ -133,6 +141,26 @@ export default function AddTestimony() {
                 <Plus size={20} color={colors.secondary} />
               </TouchableOpacity>
             </View>
+          </View>
+
+          <View style={styles.section}>
+            <TouchableOpacity
+              style={styles.checkboxContainer}
+              onPress={() => setEnhanceStory(!enhanceStory)}
+              activeOpacity={0.7}
+            >
+              <View style={styles.checkboxRow}>
+                {enhanceStory ? (
+                  <CheckSquare size={24} color={colors.secondary} strokeWidth={2.5} />
+                ) : (
+                  <Square size={24} color={colors.text.secondary} strokeWidth={2} />
+                )}
+                <Text style={styles.checkboxLabel}>Enhance my story</Text>
+              </View>
+              <Text style={styles.checkboxDescription}>
+                Let AI enhance your testimony with better storytelling
+              </Text>
+            </TouchableOpacity>
           </View>
 
           <View style={styles.section}>
@@ -389,5 +417,34 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.primary,
     fontWeight: '600' as const,
+  },
+  checkboxContainer: {
+    backgroundColor: colors.white,
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 2,
+    borderColor: '#E2E8F0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  checkboxRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 8,
+  },
+  checkboxLabel: {
+    fontSize: 18,
+    fontWeight: '700' as const,
+    color: colors.primary,
+  },
+  checkboxDescription: {
+    fontSize: 14,
+    color: colors.text.secondary,
+    lineHeight: 20,
+    paddingLeft: 36,
   },
 });

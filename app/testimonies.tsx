@@ -85,19 +85,14 @@ export default function Testimonies() {
 
   const loadDbTestimonies = useCallback(async () => {
     try {
-      if (!userProfile?.id) {
-        console.log('No user profile ID, skipping DB testimonies load');
-        return;
-      }
-
-      console.log('Loading testimonies from database for profile:', userProfile.id);
-      const testimonies = await api.witness.getTestimonies(userProfile.id);
+      console.log('Loading all testimonies from database...');
+      const testimonies = await api.witness.getAllTestimonies();
       
       const formattedTestimonies: Testimony[] = testimonies.map((t: any) => ({
         id: t.id,
-        name: userProfile.name || 'Anonymous',
-        role: userProfile.role || 'Witness',
-        photoUri: userProfile.photoUri || 'https://i.pravatar.cc/150?img=50',
+        name: t.name || 'Anonymous',
+        role: t.role || 'Witness',
+        photoUri: t.photoUri || 'https://i.pravatar.cc/150?img=50',
         story: t.enhancedMessage || t.originalMessage,
         seen: t.category === 'seen' ? [t.originalMessage] : [],
         heard: t.category === 'heard' ? [t.originalMessage] : [],
@@ -109,11 +104,11 @@ export default function Testimonies() {
       }));
       
       setDbTestimonies(formattedTestimonies);
-      console.log('Loaded testimonies from database:', formattedTestimonies.length);
+      console.log('Loaded all testimonies from database:', formattedTestimonies.length);
     } catch (error) {
       console.error('Error loading DB testimonies:', error);
     }
-  }, [userProfile?.id, userProfile?.name, userProfile?.role, userProfile?.photoUri]);
+  }, []);
 
   const loadClaps = useCallback(async () => {
     try {
