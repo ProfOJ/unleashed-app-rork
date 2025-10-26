@@ -144,26 +144,6 @@ export default function AddTestimony() {
           </View>
 
           <View style={styles.section}>
-            <TouchableOpacity
-              style={styles.checkboxContainer}
-              onPress={() => setEnhanceStory(!enhanceStory)}
-              activeOpacity={0.7}
-            >
-              <View style={styles.checkboxRow}>
-                {enhanceStory ? (
-                  <CheckSquare size={24} color={colors.secondary} strokeWidth={2.5} />
-                ) : (
-                  <Square size={24} color={colors.text.secondary} strokeWidth={2} />
-                )}
-                <Text style={styles.checkboxLabel}>Enhance my story</Text>
-              </View>
-              <Text style={styles.checkboxDescription}>
-                Let AI enhance your testimony with better storytelling
-              </Text>
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles.section}>
             <Text style={styles.sectionTitle}>Categorize your testimony</Text>
             <Text style={styles.sectionSubtitle}>
               Choose the category that best describes your testimony
@@ -201,6 +181,21 @@ export default function AddTestimony() {
                 </TouchableOpacity>
               ))}
             </View>
+
+            <TouchableOpacity
+              style={styles.checkboxContainer}
+              onPress={() => setEnhanceStory(!enhanceStory)}
+              activeOpacity={0.7}
+            >
+              <View style={styles.checkboxRow}>
+                {enhanceStory ? (
+                  <CheckSquare size={18} color={colors.secondary} strokeWidth={2.5} />
+                ) : (
+                  <Square size={18} color={colors.text.secondary} strokeWidth={2} />
+                )}
+                <Text style={styles.checkboxLabel}>Enhance my story</Text>
+              </View>
+            </TouchableOpacity>
           </View>
         </ScrollView>
 
@@ -419,32 +414,17 @@ const styles = StyleSheet.create({
     fontWeight: '600' as const,
   },
   checkboxContainer: {
-    backgroundColor: colors.white,
-    borderRadius: 16,
-    padding: 16,
-    borderWidth: 2,
-    borderColor: '#E2E8F0',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
+    marginTop: 16,
+    paddingVertical: 4,
   },
   checkboxRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    marginBottom: 8,
+    gap: 8,
   },
   checkboxLabel: {
-    fontSize: 18,
-    fontWeight: '700' as const,
-    color: colors.primary,
-  },
-  checkboxDescription: {
     fontSize: 14,
+    fontWeight: '500' as const,
     color: colors.text.secondary,
-    lineHeight: 20,
-    paddingLeft: 36,
   },
 });
