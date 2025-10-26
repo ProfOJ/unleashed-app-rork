@@ -3,6 +3,7 @@ import hiRoute from "./routes/example/hi/route";
 import saveProfileProcedure from "./routes/witness/save-profile/route";
 import saveTestimonyProcedure from "./routes/witness/save-testimony/route";
 import getProfileProcedure from "./routes/witness/get-profile/route";
+import getProfileByContactProcedure from "./routes/witness/get-profile-by-contact/route";
 import enhanceTestimonyProcedure from "./routes/witness/enhance-testimony/route";
 import getTestimoniesProcedure from "./routes/witness/get-testimonies/route";
 import deleteTestimonyProcedure from "./routes/witness/delete-testimony/route";
@@ -24,6 +25,7 @@ export const appRouter = createTRPCRouter({
     saveProfile: saveProfileProcedure,
     saveTestimony: saveTestimonyProcedure,
     getProfile: getProfileProcedure,
+    getProfileByContact: getProfileByContactProcedure,
     enhanceTestimony: enhanceTestimonyProcedure,
     getTestimonies: getTestimoniesProcedure,
     deleteTestimony: deleteTestimonyProcedure,

@@ -4,6 +4,7 @@ import { publicProcedure } from '../../../create-context';
 export const saveProfileProcedure = publicProcedure
   .input(
     z.object({
+      id: z.string().optional(),
       name: z.string(),
       contact: z.string(),
       role: z.string(),
@@ -20,19 +21,44 @@ export const saveProfileProcedure = publicProcedure
     }
 
     try {
-      const { data, error } = await ctx.supabase
-        .from('witness_profiles')
-        .insert({
-          name: input.name,
-          contact: input.contact,
-          role: input.role,
-          photo_uri: input.photoUri,
-          country: input.country,
-          district: input.district,
-          assembly: input.assembly,
-        })
-        .select()
-        .single();
+      let data, error;
+
+      if (input.id) {
+        const result = await ctx.supabase
+          .from('witness_profiles')
+          .update({
+            name: input.name,
+            contact: input.contact,
+            role: input.role,
+            photo_uri: input.photoUri,
+            country: input.country,
+            district: input.district,
+            assembly: input.assembly,
+          })
+          .eq('id', input.id)
+          .select()
+          .single();
+        
+        data = result.data;
+        error = result.error;
+      } else {
+        const result = await ctx.supabase
+          .from('witness_profiles')
+          .insert({
+            name: input.name,
+            contact: input.contact,
+            role: input.role,
+            photo_uri: input.photoUri,
+            country: input.country,
+            district: input.district,
+            assembly: input.assembly,
+          })
+          .select()
+          .single();
+        
+        data = result.data;
+        error = result.error;
+      }
 
       if (error) {
         console.error('Error saving profile:', error);

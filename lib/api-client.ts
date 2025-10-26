@@ -116,6 +116,30 @@ export const api = {
       };
     },
 
+    getProfileByContact: async (contact: string) => {
+      const response = await supabaseClient.get('/witness_profiles', {
+        params: {
+          contact: `eq.${contact}`,
+        },
+      });
+
+      const profile = response.data[0];
+      if (!profile) {
+        return null;
+      }
+
+      return {
+        id: profile.id,
+        name: profile.name,
+        contact: profile.contact,
+        role: profile.role,
+        photoUri: profile.photo_uri || '',
+        country: profile.country || '',
+        district: profile.district || '',
+        assembly: profile.assembly || '',
+      };
+    },
+
     saveTestimony: async (data: {
       witnessProfileId: string;
       originalMessage: string;

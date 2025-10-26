@@ -50,6 +50,7 @@ export default function WizardStep1() {
 
 
   const [isSaving, setIsSaving] = useState(false);
+  const [isCheckingContact, setIsCheckingContact] = useState(false);
 
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -61,6 +62,40 @@ export default function WizardStep1() {
 
     if (!result.canceled) {
       setPhotoUri(result.assets[0].uri);
+    }
+  };
+
+  const checkExistingProfile = async (contact: string) => {
+    if (!contact || contact.length < 3) {
+      return;
+    }
+
+    setIsCheckingContact(true);
+    try {
+      console.log('Checking for existing profile with contact:', contact);
+      const existingProfile = await api.witness.getProfileByContact(contact);
+      
+      if (existingProfile) {
+        console.log('Found existing profile:', existingProfile);
+        setName(existingProfile.name);
+        setRole(existingProfile.role);
+        setPhotoUri(existingProfile.photoUri || '');
+        
+        updateUserProfile({
+          id: existingProfile.id,
+          name: existingProfile.name,
+          contact: existingProfile.contact,
+          role: existingProfile.role,
+          photoUri: existingProfile.photoUri,
+          country: existingProfile.country,
+          district: existingProfile.district,
+          assembly: existingProfile.assembly,
+        });
+      }
+    } catch (error: any) {
+      console.log('No existing profile found or error:', error.message);
+    } finally {
+      setIsCheckingContact(false);
     }
   };
 
@@ -175,9 +210,15 @@ export default function WizardStep1() {
                   placeholderTextColor="#94A3B8"
                   value={phone}
                   onChangeText={setPhone}
+                  onBlur={() => checkExistingProfile(phone)}
                   keyboardType="default"
                   autoCapitalize="none"
                 />
+                {isCheckingContact && (
+                  <View style={styles.checkingIndicator}>
+                    <Text style={styles.checkingText}>Checking...</Text>
+                  </View>
+                )}
               </View>
 
               <View style={styles.inputWrapper}>
@@ -378,5 +419,17 @@ const styles = StyleSheet.create({
   },
   bottomSpacer: {
     height: 20,
+  },
+  checkingIndicator: {
+    position: 'absolute',
+    right: 18,
+    top: 0,
+    bottom: 0,
+    justifyContent: 'center',
+  },
+  checkingText: {
+    fontSize: 12,
+    color: '#64748B',
+    fontWeight: '500' as const,
   },
 });
