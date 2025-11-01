@@ -2,7 +2,7 @@ import { Stack, usePathname } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import React, { useEffect, useState } from "react";
-import { StyleSheet, Platform } from "react-native";
+import { StyleSheet, Platform, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { WitnessProvider } from "@/contexts/WitnessContext";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -31,7 +31,7 @@ function RootLayoutNav() {
   };
   
   return (
-    <>
+    <View style={styles.wrapper}>
       <StatusBar style={getStatusBarStyle()} />
       {Platform.OS === 'web' && <PWAInstallBanner />}
       <Stack screenOptions={{ headerShown: false }}>
@@ -42,7 +42,7 @@ function RootLayoutNav() {
         <Stack.Screen name="summary" options={{ headerShown: false }} />
         <Stack.Screen name="share" options={{ headerShown: false }} />
       </Stack>
-    </>
+    </View>
   );
 }
 
@@ -68,6 +68,9 @@ export default function RootLayout() {
 }
 
 const styles = StyleSheet.create({
+  wrapper: {
+    flex: 1,
+  },
   container: {
     flex: 1,
   },
