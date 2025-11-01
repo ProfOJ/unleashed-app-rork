@@ -4,6 +4,7 @@ import { api } from '@/lib/api-client';
 import {
   ArrowLeft,
   Calendar,
+  Edit,
   MapPin,
   MessageSquare,
   Phone,
@@ -15,11 +16,13 @@ import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  Modal,
   Platform,
   ScrollView,
   Share,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -43,6 +46,9 @@ export default function SoulDetail() {
   const { userProfile } = useWitness();
   const [soul, setSoul] = useState<Soul | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isEditModalVisible, setIsEditModalVisible] = useState(false);
+  const [editedSoul, setEditedSoul] = useState<Partial<Soul>>({});
+  const [isSaving, setIsSaving] = useState(false);
 
   const loadSoulDetails = useCallback(async () => {
     if (!userProfile?.id || !id) {
@@ -134,6 +140,53 @@ ${hashtags}`;
     });
   };
 
+  const handleEditPress = () => {
+    if (soul) {
+      setEditedSoul({
+        name: soul.name,
+        contact: soul.contact,
+        location: soul.location,
+        notes: soul.notes,
+        handedTo: soul.handedTo,
+        date: soul.date,
+      });
+      setIsEditModalVisible(true);
+    }
+  };
+
+  const handleSaveEdit = async () => {
+    if (!userProfile?.id || !soul?.id || !editedSoul.name) {
+      Alert.alert('Error', 'Name is required');
+      return;
+    }
+
+    try {
+      setIsSaving(true);
+      console.log('Updating soul:', editedSoul);
+      
+      await api.witness.deleteSoul(soul.id);
+
+      const newSoul = await api.witness.saveSoul({
+        witnessProfileId: userProfile.id,
+        name: editedSoul.name,
+        contact: editedSoul.contact || '',
+        location: editedSoul.location || '',
+        notes: editedSoul.notes || '',
+        handedTo: editedSoul.handedTo || '',
+        date: editedSoul.date || soul.date,
+      });
+
+      setSoul(newSoul as Soul);
+      setIsEditModalVisible(false);
+      Alert.alert('Success', 'Soul details updated successfully!');
+    } catch (error) {
+      console.error('Error updating soul:', error);
+      Alert.alert('Error', 'Failed to update soul details');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <View style={styles.container}>
@@ -195,6 +248,13 @@ ${hashtags}`;
         <Text style={styles.dateAdded}>Added on {formatDate(soul.date)}</Text>
 
         <View style={styles.detailsCard}>
+          <TouchableOpacity
+            style={styles.editIconButton}
+            onPress={handleEditPress}
+            activeOpacity={0.7}
+          >
+            <Edit size={18} color={colors.secondary} />
+          </TouchableOpacity>
           {soul.contact && (
             <View style={styles.detailRow}>
               <View style={styles.iconContainer}>
@@ -263,6 +323,96 @@ ${hashtags}`;
           <Text style={styles.shareButtonText}>Share Soul Details</Text>
         </TouchableOpacity>
       </ScrollView>
+
+      <Modal
+        visible={isEditModalVisible}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setIsEditModalVisible(false)}
+      >
+        <SafeAreaView style={styles.modalContainer} edges={['top', 'bottom']}>
+          <View style={styles.modalHeader}>
+            <TouchableOpacity
+              onPress={() => setIsEditModalVisible(false)}
+              style={styles.modalCancelButton}
+            >
+              <Text style={styles.modalCancelText}>Cancel</Text>
+            </TouchableOpacity>
+            <Text style={styles.modalTitle}>Edit Soul Details</Text>
+            <TouchableOpacity
+              onPress={handleSaveEdit}
+              style={styles.modalSaveButton}
+              disabled={isSaving}
+            >
+              {isSaving ? (
+                <ActivityIndicator size="small" color={colors.secondary} />
+              ) : (
+                <Text style={styles.modalSaveText}>Save</Text>
+              )}
+            </TouchableOpacity>
+          </View>
+
+          <ScrollView style={styles.modalContent}>
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Name *</Text>
+              <TextInput
+                style={styles.input}
+                value={editedSoul.name}
+                onChangeText={(text) => setEditedSoul({ ...editedSoul, name: text })}
+                placeholder="Enter name"
+                placeholderTextColor={colors.text.secondary}
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Contact</Text>
+              <TextInput
+                style={styles.input}
+                value={editedSoul.contact}
+                onChangeText={(text) => setEditedSoul({ ...editedSoul, contact: text })}
+                placeholder="Phone or email"
+                placeholderTextColor={colors.text.secondary}
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Location</Text>
+              <TextInput
+                style={styles.input}
+                value={editedSoul.location}
+                onChangeText={(text) => setEditedSoul({ ...editedSoul, location: text })}
+                placeholder="Enter location"
+                placeholderTextColor={colors.text.secondary}
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Handed To</Text>
+              <TextInput
+                style={styles.input}
+                value={editedSoul.handedTo}
+                onChangeText={(text) => setEditedSoul({ ...editedSoul, handedTo: text })}
+                placeholder="Person or church name"
+                placeholderTextColor={colors.text.secondary}
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Notes</Text>
+              <TextInput
+                style={[styles.input, styles.textArea]}
+                value={editedSoul.notes}
+                onChangeText={(text) => setEditedSoul({ ...editedSoul, notes: text })}
+                placeholder="Additional notes"
+                placeholderTextColor={colors.text.secondary}
+                multiline
+                numberOfLines={4}
+                textAlignVertical="top"
+              />
+            </View>
+          </ScrollView>
+        </SafeAreaView>
+      </Modal>
     </View>
   );
 }
@@ -421,5 +571,80 @@ const styles = StyleSheet.create({
     color: colors.white,
     fontSize: 17,
     fontWeight: '700' as const,
+  },
+  editIconButton: {
+    position: 'absolute' as const,
+    top: 16,
+    right: 16,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: `${colors.secondary}15`,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 1,
+  },
+  modalContainer: {
+    flex: 1,
+    backgroundColor: colors.white,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E2E8F0',
+  },
+  modalCancelButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+  },
+  modalCancelText: {
+    fontSize: 16,
+    color: colors.text.secondary,
+    fontWeight: '600' as const,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '700' as const,
+    color: colors.primary,
+  },
+  modalSaveButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+  },
+  modalSaveText: {
+    fontSize: 16,
+    color: colors.secondary,
+    fontWeight: '700' as const,
+  },
+  modalContent: {
+    flex: 1,
+    padding: 20,
+  },
+  inputGroup: {
+    marginBottom: 20,
+  },
+  inputLabel: {
+    fontSize: 14,
+    fontWeight: '600' as const,
+    color: colors.primary,
+    marginBottom: 8,
+  },
+  input: {
+    backgroundColor: '#F1F5F9',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    fontSize: 16,
+    color: colors.primary,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  textArea: {
+    minHeight: 100,
+    paddingTop: 14,
   },
 });
