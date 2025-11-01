@@ -11,11 +11,20 @@ export function usePWAInstall() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isInstallable, setIsInstallable] = useState(false);
   const [isDismissed, setIsDismissed] = useState(false);
+  const [isInstalled, setIsInstalled] = useState(false);
 
   useEffect(() => {
     if (Platform.OS !== 'web') {
       return;
     }
+
+    const checkInstalled = () => {
+      if (typeof window !== 'undefined') {
+        const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+        const isInStandaloneMode = (window.navigator as any).standalone === true;
+        setIsInstalled(isStandalone || isInStandaloneMode);
+      }
+    };
 
     const checkDismissed = async () => {
       const dismissed = await AsyncStorage.getItem('pwa-install-dismissed');
@@ -24,10 +33,12 @@ export function usePWAInstall() {
       }
     };
 
+    checkInstalled();
     checkDismissed();
 
     const handler = (e: Event) => {
       e.preventDefault();
+      console.log('beforeinstallprompt event fired');
       setDeferredPrompt(e as BeforeInstallPromptEvent);
       setIsInstallable(true);
     };
@@ -69,7 +80,9 @@ export function usePWAInstall() {
   };
 
   return {
-    isInstallable: isInstallable && !isDismissed && Platform.OS === 'web',
+    isInstallable: isInstallable && !isDismissed && !isInstalled && Platform.OS === 'web',
+    canPromptInstall: deferredPrompt !== null,
+    isInstalled,
     promptInstall,
     dismissPrompt,
     resetDismissed,

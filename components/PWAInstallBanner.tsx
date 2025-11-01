@@ -6,6 +6,8 @@ import { usePWAInstall } from '@/lib/usePWAInstall';
 export function PWAInstallBanner() {
   const { isInstallable, promptInstall, dismissPrompt } = usePWAInstall();
 
+  console.log('PWAInstallBanner render - isInstallable:', isInstallable);
+
   if (!isInstallable || Platform.OS !== 'web') {
     return null;
   }
@@ -43,10 +45,6 @@ export function PWAInstallBanner() {
 
 const styles = StyleSheet.create({
   banner: {
-    position: 'absolute' as const,
-    top: 0,
-    left: 0,
-    right: 0,
     backgroundColor: '#4F46E5',
     zIndex: 9999,
     shadowColor: '#000',

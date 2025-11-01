@@ -1,11 +1,12 @@
 import { colors } from '@/constants/colors';
 import { useWitness } from '@/contexts/WitnessContext';
 import { useRouter } from 'expo-router';
-import { BookOpen, ChevronRight, Edit2, LogOut, Menu, MessageSquare, Plus, Trash2, User } from 'lucide-react-native';
+import { BookOpen, ChevronRight, Download, Edit2, LogOut, Menu, MessageSquare, Plus, Trash2, User } from 'lucide-react-native';
 import React, { useCallback, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
 import { api } from '@/lib/api-client';
+import { usePWAInstall } from '@/lib/usePWAInstall';
 import {
   ActivityIndicator,
   Alert,
@@ -16,6 +17,7 @@ import {
   TouchableOpacity,
   View,
   Linking,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -46,6 +48,7 @@ type WitnessCard = {
 export default function Dashboard() {
   const router = useRouter();
   const { userProfile, reset } = useWitness();
+  const { canPromptInstall, promptInstall } = usePWAInstall();
   const [menuVisible, setMenuVisible] = useState(false);
   const [testimonies, setTestimonies] = useState<Testimony[]>([]);
   const [witnessCard, setWitnessCard] = useState<WitnessCard | null>(null);
@@ -217,15 +220,18 @@ export default function Dashboard() {
           style: 'destructive',
           onPress: async () => {
             try {
-              setMenuVisible(false);
               console.log('Signing out and clearing all data...');
               
               await AsyncStorage.clear();
               
               reset();
               
+              setMenuVisible(false);
+              
               console.log('All data cleared, redirecting to wizard...');
-              router.replace('/wizard-step1');
+              setTimeout(() => {
+                router.replace('/wizard-step1');
+              }, 100);
             } catch (error) {
               console.error('Error during sign out:', error);
               Alert.alert('Error', 'Failed to sign out. Please try again.');
@@ -234,6 +240,19 @@ export default function Dashboard() {
         },
       ]
     );
+  };
+
+  const handleInstallApp = async () => {
+    if (canPromptInstall) {
+      setMenuVisible(false);
+      await promptInstall();
+    } else {
+      Alert.alert(
+        'Install App',
+        'To install this app, please use your browser\'s "Add to Home Screen" or "Install App" option.',
+        [{ text: 'OK' }]
+      );
+    }
   };
 
   const getCategoryLabel = (testimony: Testimony) => {
@@ -346,9 +365,22 @@ export default function Dashboard() {
                 <ChevronRight size={20} color={colors.text.secondary} />
               </TouchableOpacity>
               
+              {Platform.OS === 'web' && (
+                <TouchableOpacity
+                  style={styles.menuItem}
+                  onPress={handleInstallApp}
+                  activeOpacity={0.7}
+                >
+                  <View style={styles.installContent}>
+                    <Download size={20} color={colors.secondary} />
+                    <Text style={[styles.menuItemText, styles.installText]}>Install App</Text>
+                  </View>
+                </TouchableOpacity>
+              )}
+              
               <TouchableOpacity
                 style={[styles.menuItem, styles.signOutItem]}
-                onPress={() => handleSignOut()}
+                onPress={handleSignOut}
                 activeOpacity={0.7}
               >
                 <View style={styles.signOutContent}>
@@ -736,6 +768,14 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600' as const,
     color: '#EF4444',
+  },
+  installContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  installText: {
+    color: colors.secondary,
   },
   headerTitle: {
     fontSize: 18,
