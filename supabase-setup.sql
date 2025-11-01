@@ -47,6 +47,17 @@ CREATE TABLE IF NOT EXISTS souls (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- Create soul_activities table for tracking soul follow-ups
+CREATE TABLE IF NOT EXISTS soul_activities (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  soul_id UUID NOT NULL REFERENCES souls(id) ON DELETE CASCADE,
+  activity_type TEXT NOT NULL CHECK (activity_type IN ('follow_up', 'church_attendance', 'water_baptism', 'holy_ghost_baptism')),
+  date DATE NOT NULL,
+  remarks TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
 -- Create witness_cards table for tracking generated witness cards
 CREATE TABLE IF NOT EXISTS witness_cards (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -112,6 +123,10 @@ CREATE INDEX IF NOT EXISTS idx_souls_witness_profile_id ON souls(witness_profile
 CREATE INDEX IF NOT EXISTS idx_souls_created_at ON souls(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_souls_date ON souls(date DESC);
 
+CREATE INDEX IF NOT EXISTS idx_soul_activities_soul_id ON soul_activities(soul_id);
+CREATE INDEX IF NOT EXISTS idx_soul_activities_date ON soul_activities(date DESC);
+CREATE INDEX IF NOT EXISTS idx_soul_activities_activity_type ON soul_activities(activity_type);
+
 CREATE INDEX IF NOT EXISTS idx_witness_cards_witness_profile_id ON witness_cards(witness_profile_id);
 CREATE INDEX IF NOT EXISTS idx_witness_cards_created_at ON witness_cards(created_at DESC);
 
@@ -148,6 +163,9 @@ CREATE TRIGGER update_testimonies_updated_at BEFORE UPDATE ON testimonies FOR EA
 DROP TRIGGER IF EXISTS update_souls_updated_at ON souls;
 CREATE TRIGGER update_souls_updated_at BEFORE UPDATE ON souls FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_soul_activities_updated_at ON soul_activities;
+CREATE TRIGGER update_soul_activities_updated_at BEFORE UPDATE ON soul_activities FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
 DROP TRIGGER IF EXISTS update_witness_cards_updated_at ON witness_cards;
 CREATE TRIGGER update_witness_cards_updated_at BEFORE UPDATE ON witness_cards FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
@@ -161,6 +179,7 @@ CREATE TRIGGER update_churches_updated_at BEFORE UPDATE ON churches FOR EACH ROW
 ALTER TABLE witness_profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE testimonies ENABLE ROW LEVEL SECURITY;
 ALTER TABLE souls ENABLE ROW LEVEL SECURITY;
+ALTER TABLE soul_activities ENABLE ROW LEVEL SECURITY;
 ALTER TABLE witness_cards ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_points ENABLE ROW LEVEL SECURITY;
 ALTER TABLE point_transactions ENABLE ROW LEVEL SECURITY;
@@ -171,6 +190,7 @@ ALTER TABLE witness_churches ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Allow all operations on witness_profiles" ON witness_profiles;
 DROP POLICY IF EXISTS "Allow all operations on testimonies" ON testimonies;
 DROP POLICY IF EXISTS "Allow all operations on souls" ON souls;
+DROP POLICY IF EXISTS "Allow all operations on soul_activities" ON soul_activities;
 DROP POLICY IF EXISTS "Allow all operations on witness_cards" ON witness_cards;
 DROP POLICY IF EXISTS "Allow all operations on user_points" ON user_points;
 DROP POLICY IF EXISTS "Allow all operations on point_transactions" ON point_transactions;
@@ -181,6 +201,7 @@ DROP POLICY IF EXISTS "Allow all operations on witness_churches" ON witness_chur
 CREATE POLICY "Allow all operations on witness_profiles" ON witness_profiles FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Allow all operations on testimonies" ON testimonies FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Allow all operations on souls" ON souls FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Allow all operations on soul_activities" ON soul_activities FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Allow all operations on witness_cards" ON witness_cards FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Allow all operations on user_points" ON user_points FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Allow all operations on point_transactions" ON point_transactions FOR ALL USING (true) WITH CHECK (true);
