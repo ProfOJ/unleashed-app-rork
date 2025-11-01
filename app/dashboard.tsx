@@ -1,10 +1,18 @@
 import { colors } from '@/constants/colors';
 import { useWitness } from '@/contexts/WitnessContext';
 import { useRouter } from 'expo-router';
+<<<<<<< HEAD
 import { BookOpen, ChevronRight, Edit, Edit2, LogOut, Menu, MessageSquare, Plus, Trash2, User } from 'lucide-react-native';
 import React, { useCallback, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect } from '@react-navigation/native';
+=======
+import { BookOpen, ChevronRight, Edit2, LogOut, Menu, MessageSquare, Plus, Trash2, User } from 'lucide-react-native';
+import React, { useCallback, useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useFocusEffect } from '@react-navigation/native';
+import { api } from '@/lib/api-client';
+>>>>>>> 425b213aaee8a1f3b8d899604e97cce527a8d197
 import {
   ActivityIndicator,
   Alert,
@@ -49,6 +57,10 @@ export default function Dashboard() {
   const [testimonies, setTestimonies] = useState<Testimony[]>([]);
   const [witnessCard, setWitnessCard] = useState<WitnessCard | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+<<<<<<< HEAD
+=======
+  const [soulsCount, setSoulsCount] = useState(0);
+>>>>>>> 425b213aaee8a1f3b8d899604e97cce527a8d197
 
   const TESTIMONIES_KEY = '@unleashed_testimonies';
   const WITNESS_CARD_KEY = '@unleashed_witness_card';
@@ -92,11 +104,36 @@ export default function Dashboard() {
     }
   };
 
+<<<<<<< HEAD
+=======
+  const loadSoulsCount = async () => {
+    if (!userProfile?.id) {
+      setSoulsCount(0);
+      return;
+    }
+
+    try {
+      console.log('Loading souls count for profile:', userProfile.id);
+      const soulsData = await api.witness.getSouls(userProfile.id);
+      console.log('Souls loaded:', soulsData.length);
+      setSoulsCount(soulsData.length);
+    } catch (error) {
+      console.error('Error loading souls count:', error);
+      setSoulsCount(0);
+    }
+  };
+
+>>>>>>> 425b213aaee8a1f3b8d899604e97cce527a8d197
   useFocusEffect(
     useCallback(() => {
       loadTestimonies();
       loadWitnessCard();
+<<<<<<< HEAD
     }, [])
+=======
+      loadSoulsCount();
+    }, [userProfile?.id])
+>>>>>>> 425b213aaee8a1f3b8d899604e97cce527a8d197
   );
 
   const handleEditTestimony = (id: string) => {
@@ -352,6 +389,17 @@ export default function Dashboard() {
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.content}>
         <View style={styles.contentInner}>
         <View style={styles.profileCard}>
+<<<<<<< HEAD
+=======
+          <TouchableOpacity
+            style={styles.editIconButton}
+            onPress={() => router.push('/wizard-step1')}
+            activeOpacity={0.7}
+          >
+            <Edit2 size={20} color={colors.secondary} />
+          </TouchableOpacity>
+          
+>>>>>>> 425b213aaee8a1f3b8d899604e97cce527a8d197
           <View style={styles.profileHeader}>
             {userProfile?.photoUri ? (
               <Image
@@ -368,6 +416,7 @@ export default function Dashboard() {
               <Text style={styles.profileRole}>{userProfile?.role || 'Your Role'}</Text>
             </View>
           </View>
+<<<<<<< HEAD
 
           <TouchableOpacity
             style={styles.editButton}
@@ -376,6 +425,33 @@ export default function Dashboard() {
           >
             <Edit size={16} color={colors.white} />
             <Text style={styles.editButtonText}>Edit Profile</Text>
+=======
+        </View>
+
+        <View style={styles.analyticsRow}>
+          <TouchableOpacity 
+            style={styles.analyticsCard}
+            onPress={() => router.push('/testimonies')}
+            activeOpacity={0.8}
+          >
+            <View style={styles.analyticsIconContainer}>
+              <MessageSquare size={28} color={colors.white} />
+            </View>
+            <Text style={styles.analyticsNumber}>{testimonies.length}</Text>
+            <Text style={styles.analyticsLabel}>Testimonies</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={[styles.analyticsCard, styles.analyticsCardSecondary]}
+            onPress={() => router.push('/souls')}
+            activeOpacity={0.8}
+          >
+            <View style={[styles.analyticsIconContainer, styles.analyticsIconSecondary]}>
+              <User size={28} color={colors.white} />
+            </View>
+            <Text style={styles.analyticsNumber}>{soulsCount}</Text>
+            <Text style={styles.analyticsLabel}>Souls Won</Text>
+>>>>>>> 425b213aaee8a1f3b8d899604e97cce527a8d197
           </TouchableOpacity>
         </View>
 
@@ -708,7 +784,11 @@ const styles = StyleSheet.create({
     gap: 20,
   },
   profileCard: {
+<<<<<<< HEAD
     backgroundColor: colors.white,
+=======
+    backgroundColor: '#FFFFFF',
+>>>>>>> 425b213aaee8a1f3b8d899604e97cce527a8d197
     borderRadius: 16,
     padding: 20,
     shadowColor: '#000',
@@ -717,11 +797,31 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 2,
   },
+<<<<<<< HEAD
+=======
+  editIconButton: {
+    position: 'absolute' as const,
+    top: 16,
+    right: 16,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#F1F5F9',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    zIndex: 10,
+  },
+>>>>>>> 425b213aaee8a1f3b8d899604e97cce527a8d197
   profileHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 16,
+<<<<<<< HEAD
     marginBottom: 16,
+=======
+>>>>>>> 425b213aaee8a1f3b8d899604e97cce527a8d197
   },
   profileImage: {
     width: 80,
@@ -749,6 +849,7 @@ const styles = StyleSheet.create({
     color: colors.text.secondary,
     fontWeight: '500' as const,
   },
+<<<<<<< HEAD
   editButton: {
     backgroundColor: colors.secondary,
     flexDirection: 'row',
@@ -763,6 +864,8 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '600' as const,
   },
+=======
+>>>>>>> 425b213aaee8a1f3b8d899604e97cce527a8d197
   section: {
     gap: 16,
   },
@@ -786,7 +889,11 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   loadingContainer: {
+<<<<<<< HEAD
     backgroundColor: colors.white,
+=======
+    backgroundColor: '#FFFFFF',
+>>>>>>> 425b213aaee8a1f3b8d899604e97cce527a8d197
     borderRadius: 16,
     padding: 40,
     alignItems: 'center',
@@ -805,7 +912,11 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   testimonyItem: {
+<<<<<<< HEAD
     backgroundColor: colors.white,
+=======
+    backgroundColor: '#FFFFFF',
+>>>>>>> 425b213aaee8a1f3b8d899604e97cce527a8d197
     borderRadius: 16,
     padding: 16,
     shadowColor: '#000',
@@ -842,7 +953,11 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
+<<<<<<< HEAD
     backgroundColor: '#F8FAFC',
+=======
+    backgroundColor: '#F1F5F9',
+>>>>>>> 425b213aaee8a1f3b8d899604e97cce527a8d197
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
@@ -870,7 +985,11 @@ const styles = StyleSheet.create({
     color: colors.secondary,
   },
   emptyState: {
+<<<<<<< HEAD
     backgroundColor: colors.white,
+=======
+    backgroundColor: '#FFFFFF',
+>>>>>>> 425b213aaee8a1f3b8d899604e97cce527a8d197
     borderRadius: 16,
     padding: 32,
     alignItems: 'center',
@@ -887,7 +1006,11 @@ const styles = StyleSheet.create({
     textAlign: 'center' as const,
   },
   witnessCardItem: {
+<<<<<<< HEAD
     backgroundColor: colors.white,
+=======
+    backgroundColor: '#FFFFFF',
+>>>>>>> 425b213aaee8a1f3b8d899604e97cce527a8d197
     borderRadius: 16,
     padding: 16,
     borderWidth: 2,
@@ -973,6 +1096,53 @@ const styles = StyleSheet.create({
     paddingBottom: 8,
     paddingHorizontal: 20,
   },
+<<<<<<< HEAD
+=======
+  analyticsRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  analyticsCard: {
+    flex: 1,
+    backgroundColor: colors.secondary,
+    borderRadius: 16,
+    padding: 20,
+    alignItems: 'center',
+    shadowColor: colors.secondary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
+    gap: 8,
+  },
+  analyticsCardSecondary: {
+    backgroundColor: '#10B981',
+    shadowColor: '#10B981',
+  },
+  analyticsIconContainer: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 4,
+  },
+  analyticsIconSecondary: {
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  analyticsNumber: {
+    fontSize: 32,
+    fontWeight: '800' as const,
+    color: colors.white,
+  },
+  analyticsLabel: {
+    fontSize: 14,
+    fontWeight: '600' as const,
+    color: colors.white,
+    opacity: 0.95,
+  },
+>>>>>>> 425b213aaee8a1f3b8d899604e97cce527a8d197
   navItem: {
     alignItems: 'center',
     justifyContent: 'center',

@@ -293,7 +293,12 @@ export default function Souls() {
         ) : souls.length > 0 ? (
           <View style={styles.soulsList}>
             {souls.map((soul) => (
-              <View key={soul.id} style={styles.soulCard}>
+              <TouchableOpacity
+                key={soul.id}
+                style={styles.soulCard}
+                onPress={() => router.push(`/soul-detail?id=${soul.id}`)}
+                activeOpacity={0.7}
+              >
                 <View style={styles.soulHeader}>
                   <View style={styles.soulAvatar}>
                     <User size={24} color={colors.white} />
@@ -338,7 +343,7 @@ export default function Souls() {
                     <Text style={styles.soulDetailText}>{soul.notes}</Text>
                   </View>
                 )}
-              </View>
+              </TouchableOpacity>
             ))}
           </View>
         ) : (

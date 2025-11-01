@@ -15,7 +15,7 @@ function RootLayoutNav() {
   
   const getStatusBarStyle = () => {
     const lightScreens = ['/dashboard', '/testimonies', '/add-testimony', '/preview-testimony', 
-                          '/souls', '/leaderboard', '/find-church', '/guides'];
+                          '/souls', '/soul-detail', '/leaderboard', '/find-church', '/guides'];
     const darkScreens = ['/index', '/wizard-step1', '/wizard-step2', '/wizard-step3', 
                          '/summary', '/share', '/witness-card', '/onboarding'];
     
