@@ -2,11 +2,13 @@ import { Stack, usePathname } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import React, { useEffect, useState } from "react";
-import { StyleSheet } from "react-native";
+import { StyleSheet, Platform } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { WitnessProvider } from "@/contexts/WitnessContext";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { trpc, trpcClient } from "@/lib/trpc";
+import { PWAInstallBanner } from "@/components/PWAInstallBanner";
+import { registerServiceWorker } from "@/lib/registerServiceWorker";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -31,6 +33,7 @@ function RootLayoutNav() {
   return (
     <>
       <StatusBar style={getStatusBarStyle()} />
+      {Platform.OS === 'web' && <PWAInstallBanner />}
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Screen name="wizard-step1" options={{ headerShown: false }} />
@@ -48,6 +51,7 @@ export default function RootLayout() {
 
   useEffect(() => {
     SplashScreen.hideAsync();
+    registerServiceWorker();
   }, []);
 
   return (
