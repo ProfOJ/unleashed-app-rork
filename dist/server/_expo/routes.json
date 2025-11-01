@@ -57,6 +57,12 @@
       "routeKeys": {}
     },
     {
+      "file": "./soul-detail.tsx",
+      "page": "/soul-detail",
+      "namedRegex": "^/soul\\-detail(?:/)?$",
+      "routeKeys": {}
+    },
+    {
       "file": "./leaderboard.tsx",
       "page": "/leaderboard",
       "namedRegex": "^/leaderboard(?:/)?$",
