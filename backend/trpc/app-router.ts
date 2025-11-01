@@ -16,6 +16,9 @@ import runTestsProcedure from "./routes/test/run-tests/route";
 import saveSoulProcedure from "./routes/souls/save-soul/route";
 import getSoulsProcedure from "./routes/souls/get-souls/route";
 import deleteSoulProcedure from "./routes/souls/delete-soul/route";
+import addActivityProcedure from "./routes/souls/add-activity/route";
+import getActivitiesProcedure from "./routes/souls/get-activities/route";
+import deleteActivityProcedure from "./routes/souls/delete-activity/route";
 
 export const appRouter = createTRPCRouter({
   example: createTRPCRouter({
@@ -44,6 +47,9 @@ export const appRouter = createTRPCRouter({
     saveSoul: saveSoulProcedure,
     getSouls: getSoulsProcedure,
     deleteSoul: deleteSoulProcedure,
+    addActivity: addActivityProcedure,
+    getActivities: getActivitiesProcedure,
+    deleteActivity: deleteActivityProcedure,
   }),
 });
 

@@ -4,11 +4,15 @@ import { api } from '@/lib/api-client';
 import {
   ArrowLeft,
   Calendar,
+  ChevronDown,
+  ClipboardList,
   Edit,
   MapPin,
   MessageSquare,
   Phone,
+  Plus,
   Share2,
+  Trash2,
   User,
   UserCheck,
 } from 'lucide-react-native';
@@ -28,6 +32,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useWitness } from '@/contexts/WitnessContext';
+import { trpc } from '@/lib/trpc';
 
 type Soul = {
   id: string;
@@ -40,6 +45,18 @@ type Soul = {
   createdAt: string;
 };
 
+type ActivityType = 'follow_up' | 'church_attendance' | 'water_baptism' | 'holy_ghost_baptism';
+
+type Activity = {
+  id: string;
+  soul_id: string;
+  activity_type: ActivityType;
+  date: string;
+  remarks: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
 export default function SoulDetail() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -49,6 +66,38 @@ export default function SoulDetail() {
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [editedSoul, setEditedSoul] = useState<Partial<Soul>>({});
   const [isSaving, setIsSaving] = useState(false);
+  const [isAddActivityModalVisible, setIsAddActivityModalVisible] = useState(false);
+  const [activityType, setActivityType] = useState<ActivityType>('follow_up');
+  const [activityDate, setActivityDate] = useState(new Date().toISOString().split('T')[0]);
+  const [activityRemarks, setActivityRemarks] = useState('');
+  const [isActivityDropdownOpen, setIsActivityDropdownOpen] = useState(false);
+
+  const activitiesQuery = trpc.souls.getActivities.useQuery(id || '', {
+    enabled: !!id,
+  });
+
+  const addActivityMutation = trpc.souls.addActivity.useMutation({
+    onSuccess: () => {
+      activitiesQuery.refetch();
+      setIsAddActivityModalVisible(false);
+      setActivityRemarks('');
+      setActivityDate(new Date().toISOString().split('T')[0]);
+      Alert.alert('Success', 'Activity added successfully!');
+    },
+    onError: (error) => {
+      Alert.alert('Error', error.message || 'Failed to add activity');
+    },
+  });
+
+  const deleteActivityMutation = trpc.souls.deleteActivity.useMutation({
+    onSuccess: () => {
+      activitiesQuery.refetch();
+      Alert.alert('Success', 'Activity deleted successfully!');
+    },
+    onError: (error) => {
+      Alert.alert('Error', error.message || 'Failed to delete activity');
+    },
+  });
 
   const loadSoulDetails = useCallback(async () => {
     if (!userProfile?.id || !id) {
@@ -151,6 +200,47 @@ ${hashtags}`;
         date: soul.date,
       });
       setIsEditModalVisible(true);
+    }
+  };
+
+  const handleAddActivity = () => {
+    if (!id) return;
+
+    addActivityMutation.mutate({
+      soulId: id,
+      activityType: activityType,
+      date: activityDate,
+      remarks: activityRemarks || undefined,
+    });
+  };
+
+  const handleDeleteActivity = (activityId: string) => {
+    Alert.alert(
+      'Delete Activity',
+      'Are you sure you want to delete this activity?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: () => deleteActivityMutation.mutate(activityId),
+        },
+      ]
+    );
+  };
+
+  const getActivityTypeLabel = (type: ActivityType) => {
+    switch (type) {
+      case 'follow_up':
+        return 'Follow Up';
+      case 'church_attendance':
+        return 'Church Attendance';
+      case 'water_baptism':
+        return 'Water Baptism';
+      case 'holy_ghost_baptism':
+        return 'Holy Ghost Baptism';
+      default:
+        return type;
     }
   };
 
@@ -314,6 +404,53 @@ ${hashtags}`;
           )}
         </View>
 
+        <View style={styles.detailsCard}>
+          <View style={styles.activityHeader}>
+            <View style={styles.activityHeaderLeft}>
+              <ClipboardList size={20} color={colors.secondary} />
+              <Text style={styles.activityTitle}>Soul Activity</Text>
+            </View>
+            <TouchableOpacity
+              style={styles.addActivityButton}
+              onPress={() => setIsAddActivityModalVisible(true)}
+              activeOpacity={0.7}
+            >
+              <Plus size={20} color={colors.secondary} />
+            </TouchableOpacity>
+          </View>
+
+          {activitiesQuery.isLoading ? (
+            <ActivityIndicator size="small" color={colors.secondary} style={{ marginTop: 16 }} />
+          ) : activitiesQuery.data && activitiesQuery.data.length > 0 ? (
+            <View style={styles.activitiesList}>
+              {activitiesQuery.data.map((activity: Activity) => (
+                <View key={activity.id} style={styles.activityItem}>
+                  <View style={styles.activityContent}>
+                    <Text style={styles.activityTypeText}>
+                      {getActivityTypeLabel(activity.activity_type)}
+                    </Text>
+                    <Text style={styles.activityDateText}>
+                      {formatDate(activity.date)}
+                    </Text>
+                    {activity.remarks && (
+                      <Text style={styles.activityRemarks}>{activity.remarks}</Text>
+                    )}
+                  </View>
+                  <TouchableOpacity
+                    onPress={() => handleDeleteActivity(activity.id)}
+                    style={styles.deleteActivityButton}
+                    activeOpacity={0.7}
+                  >
+                    <Trash2 size={16} color="#EF4444" />
+                  </TouchableOpacity>
+                </View>
+              ))}
+            </View>
+          ) : (
+            <Text style={styles.noActivitiesText}>No activities recorded yet</Text>
+          )}
+        </View>
+
         <TouchableOpacity
           style={styles.shareButtonLarge}
           onPress={handleShare}
@@ -404,6 +541,96 @@ ${hashtags}`;
                 value={editedSoul.notes}
                 onChangeText={(text) => setEditedSoul({ ...editedSoul, notes: text })}
                 placeholder="Additional notes"
+                placeholderTextColor={colors.text.secondary}
+                multiline
+                numberOfLines={4}
+                textAlignVertical="top"
+              />
+            </View>
+          </ScrollView>
+        </SafeAreaView>
+      </Modal>
+
+      <Modal
+        visible={isAddActivityModalVisible}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setIsAddActivityModalVisible(false)}
+      >
+        <SafeAreaView style={styles.modalContainer} edges={['top', 'bottom']}>
+          <View style={styles.modalHeader}>
+            <TouchableOpacity
+              onPress={() => setIsAddActivityModalVisible(false)}
+              style={styles.modalCancelButton}
+            >
+              <Text style={styles.modalCancelText}>Cancel</Text>
+            </TouchableOpacity>
+            <Text style={styles.modalTitle}>Add Activity</Text>
+            <TouchableOpacity
+              onPress={handleAddActivity}
+              style={styles.modalSaveButton}
+              disabled={addActivityMutation.isPending}
+            >
+              {addActivityMutation.isPending ? (
+                <ActivityIndicator size="small" color={colors.secondary} />
+              ) : (
+                <Text style={styles.modalSaveText}>Save</Text>
+              )}
+            </TouchableOpacity>
+          </View>
+
+          <ScrollView style={styles.modalContent}>
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Activity Type *</Text>
+              <TouchableOpacity
+                style={styles.dropdownButton}
+                onPress={() => setIsActivityDropdownOpen(!isActivityDropdownOpen)}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.dropdownButtonText}>
+                  {getActivityTypeLabel(activityType)}
+                </Text>
+                <ChevronDown size={20} color={colors.text.secondary} />
+              </TouchableOpacity>
+              {isActivityDropdownOpen && (
+                <View style={styles.dropdownMenu}>
+                  {(['follow_up', 'church_attendance', 'water_baptism', 'holy_ghost_baptism'] as ActivityType[]).map((type) => (
+                    <TouchableOpacity
+                      key={type}
+                      style={styles.dropdownItem}
+                      onPress={() => {
+                        setActivityType(type);
+                        setIsActivityDropdownOpen(false);
+                      }}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={styles.dropdownItemText}>
+                        {getActivityTypeLabel(type)}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Date *</Text>
+              <TextInput
+                style={styles.input}
+                value={activityDate}
+                onChangeText={setActivityDate}
+                placeholder="YYYY-MM-DD"
+                placeholderTextColor={colors.text.secondary}
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Remarks</Text>
+              <TextInput
+                style={[styles.input, styles.textArea]}
+                value={activityRemarks}
+                onChangeText={setActivityRemarks}
+                placeholder="Additional notes or remarks"
                 placeholderTextColor={colors.text.secondary}
                 multiline
                 numberOfLines={4}
@@ -646,5 +873,109 @@ const styles = StyleSheet.create({
   textArea: {
     minHeight: 100,
     paddingTop: 14,
+  },
+  activityHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+  },
+  activityHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  activityTitle: {
+    fontSize: 17,
+    fontWeight: '700' as const,
+    color: colors.primary,
+  },
+  addActivityButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: `${colors.secondary}15`,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  activitiesList: {
+    gap: 12,
+  },
+  activityItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    padding: 16,
+    backgroundColor: '#F8FAFC',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  activityContent: {
+    flex: 1,
+    gap: 4,
+  },
+  activityTypeText: {
+    fontSize: 15,
+    fontWeight: '600' as const,
+    color: colors.primary,
+  },
+  activityDateText: {
+    fontSize: 13,
+    fontWeight: '500' as const,
+    color: colors.text.secondary,
+  },
+  activityRemarks: {
+    fontSize: 14,
+    color: colors.text.secondary,
+    marginTop: 4,
+    lineHeight: 20,
+  },
+  deleteActivityButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#FEE2E2',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  noActivitiesText: {
+    fontSize: 14,
+    color: colors.text.secondary,
+    textAlign: 'center' as const,
+    paddingVertical: 20,
+  },
+  dropdownButton: {
+    backgroundColor: '#F1F5F9',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  dropdownButtonText: {
+    fontSize: 16,
+    color: colors.primary,
+  },
+  dropdownMenu: {
+    marginTop: 8,
+    backgroundColor: colors.white,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    overflow: 'hidden',
+  },
+  dropdownItem: {
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E2E8F0',
+  },
+  dropdownItemText: {
+    fontSize: 16,
+    color: colors.primary,
   },
 });

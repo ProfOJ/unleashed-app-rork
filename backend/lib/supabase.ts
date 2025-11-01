@@ -238,6 +238,34 @@ export type Database = {
           metadata?: Record<string, unknown> | null;
         };
       };
+      soul_activities: {
+        Row: {
+          id: string;
+          soul_id: string;
+          activity_type: 'follow_up' | 'church_attendance' | 'water_baptism' | 'holy_ghost_baptism';
+          date: string;
+          remarks: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          soul_id: string;
+          activity_type: 'follow_up' | 'church_attendance' | 'water_baptism' | 'holy_ghost_baptism';
+          date: string;
+          remarks?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          soul_id?: string;
+          activity_type?: 'follow_up' | 'church_attendance' | 'water_baptism' | 'holy_ghost_baptism';
+          date?: string;
+          remarks?: string | null;
+          updated_at?: string;
+        };
+      };
     };
   };
 };
