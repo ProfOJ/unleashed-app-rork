@@ -1,0 +1,126 @@
+{
+  "apiRoutes": [],
+  "htmlRoutes": [
+    {
+      "file": "./index.tsx",
+      "page": "/index",
+      "namedRegex": "^/(?:/)?$",
+      "routeKeys": {}
+    },
+    {
+      "file": "./souls.tsx",
+      "page": "/souls",
+      "namedRegex": "^/souls(?:/)?$",
+      "routeKeys": {}
+    },
+    {
+      "file": "./share.tsx",
+      "page": "/share",
+      "namedRegex": "^/share(?:/)?$",
+      "routeKeys": {}
+    },
+    {
+      "file": "./guides.tsx",
+      "page": "/guides",
+      "namedRegex": "^/guides(?:/)?$",
+      "routeKeys": {}
+    },
+    {
+      "file": "./summary.tsx",
+      "page": "/summary",
+      "namedRegex": "^/summary(?:/)?$",
+      "routeKeys": {}
+    },
+    {
+      "file": "expo-router/build/views/Sitemap.js",
+      "page": "/_sitemap",
+      "namedRegex": "^/_sitemap(?:/)?$",
+      "routeKeys": {},
+      "generated": true
+    },
+    {
+      "file": "./dashboard.tsx",
+      "page": "/dashboard",
+      "namedRegex": "^/dashboard(?:/)?$",
+      "routeKeys": {}
+    },
+    {
+      "file": "./onboarding.tsx",
+      "page": "/onboarding",
+      "namedRegex": "^/onboarding(?:/)?$",
+      "routeKeys": {}
+    },
+    {
+      "file": "./testimonies.tsx",
+      "page": "/testimonies",
+      "namedRegex": "^/testimonies(?:/)?$",
+      "routeKeys": {}
+    },
+    {
+      "file": "./leaderboard.tsx",
+      "page": "/leaderboard",
+      "namedRegex": "^/leaderboard(?:/)?$",
+      "routeKeys": {}
+    },
+    {
+      "file": "./find-church.tsx",
+      "page": "/find-church",
+      "namedRegex": "^/find\\-church(?:/)?$",
+      "routeKeys": {}
+    },
+    {
+      "file": "./wizard-step3.tsx",
+      "page": "/wizard-step3",
+      "namedRegex": "^/wizard\\-step3(?:/)?$",
+      "routeKeys": {}
+    },
+    {
+      "file": "./wizard-step2.tsx",
+      "page": "/wizard-step2",
+      "namedRegex": "^/wizard\\-step2(?:/)?$",
+      "routeKeys": {}
+    },
+    {
+      "file": "./wizard-step1.tsx",
+      "page": "/wizard-step1",
+      "namedRegex": "^/wizard\\-step1(?:/)?$",
+      "routeKeys": {}
+    },
+    {
+      "file": "./witness-card.tsx",
+      "page": "/witness-card",
+      "namedRegex": "^/witness\\-card(?:/)?$",
+      "routeKeys": {}
+    },
+    {
+      "file": "./test-supabase.tsx",
+      "page": "/test-supabase",
+      "namedRegex": "^/test\\-supabase(?:/)?$",
+      "routeKeys": {}
+    },
+    {
+      "file": "./add-testimony.tsx",
+      "page": "/add-testimony",
+      "namedRegex": "^/add\\-testimony(?:/)?$",
+      "routeKeys": {}
+    },
+    {
+      "file": "./preview-testimony.tsx",
+      "page": "/preview-testimony",
+      "namedRegex": "^/preview\\-testimony(?:/)?$",
+      "routeKeys": {}
+    }
+  ],
+  "notFoundRoutes": [
+    {
+      "file": "./+not-found.tsx",
+      "page": "/+not-found",
+      "namedRegex": "^(?:/(?<notfound>.+?))?(?:/)?$",
+      "routeKeys": {
+        "notfound": "not-found"
+      }
+    }
+  ],
+  "redirects": [],
+  "rewrites": []
+}
