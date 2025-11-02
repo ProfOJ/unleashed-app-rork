@@ -500,6 +500,60 @@ Just write the witness card message directly, no explanations.`;
       return { success: true };
     },
 
+    getSoulActivities: async (soulId: string) => {
+      const response = await supabaseClient.get('/soul_activities', {
+        params: {
+          soul_id: `eq.${soulId}`,
+          order: 'date.desc',
+        },
+      });
+
+      return response.data.map((a: any) => ({
+        id: a.id,
+        soulId: a.soul_id,
+        activityType: a.activity_type,
+        date: a.date,
+        remarks: a.remarks,
+        createdAt: a.created_at,
+        updatedAt: a.updated_at,
+      }));
+    },
+
+    addSoulActivity: async (data: {
+      soulId: string;
+      activityType: 'follow_up' | 'church_attendance' | 'water_baptism' | 'holy_ghost_baptism';
+      date: string;
+      remarks?: string;
+    }) => {
+      const response = await supabaseClient.post('/soul_activities', {
+        soul_id: data.soulId,
+        activity_type: data.activityType,
+        date: data.date,
+        remarks: data.remarks || null,
+      });
+
+      const activity = response.data[0];
+      return {
+        id: activity.id,
+        soulId: activity.soul_id,
+        activityType: activity.activity_type,
+        date: activity.date,
+        remarks: activity.remarks,
+        createdAt: activity.created_at,
+        updatedAt: activity.updated_at,
+      };
+    },
+
+    deleteSoulActivity: async (activityId: string) => {
+      await supabaseClient.delete('/soul_activities', {
+        params: {
+          id: `eq.${activityId}`,
+        },
+      });
+
+      return { success: true };
+    },
+
     saveWitnessCard: async (data: {
       witnessProfileId: string;
       cardData: Record<string, any>;

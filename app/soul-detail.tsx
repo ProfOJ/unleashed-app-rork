@@ -33,7 +33,6 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useWitness } from '@/contexts/WitnessContext';
-import { trpc } from '@/lib/trpc';
 
 type Soul = {
   id: string;
@@ -50,12 +49,12 @@ type ActivityType = 'follow_up' | 'church_attendance' | 'water_baptism' | 'holy_
 
 type Activity = {
   id: string;
-  soul_id: string;
-  activity_type: ActivityType;
+  soulId: string;
+  activityType: ActivityType;
   date: string;
   remarks: string | null;
-  created_at: string;
-  updated_at: string;
+  createdAt: string;
+  updatedAt: string;
 };
 
 export default function SoulDetail() {
@@ -72,33 +71,25 @@ export default function SoulDetail() {
   const [activityDate, setActivityDate] = useState(new Date().toISOString().split('T')[0]);
   const [activityRemarks, setActivityRemarks] = useState('');
   const [isActivityDropdownOpen, setIsActivityDropdownOpen] = useState(false);
+  const [activities, setActivities] = useState<Activity[]>([]);
+  const [isLoadingActivities, setIsLoadingActivities] = useState(false);
+  const [isAddingActivity, setIsAddingActivity] = useState(false);
 
-  const activitiesQuery = trpc.souls.getActivities.useQuery(id || '', {
-    enabled: !!id,
-  });
+  const loadSoulActivities = useCallback(async () => {
+    if (!id) return;
 
-  const addActivityMutation = trpc.souls.addActivity.useMutation({
-    onSuccess: () => {
-      activitiesQuery.refetch();
-      setIsAddActivityModalVisible(false);
-      setActivityRemarks('');
-      setActivityDate(new Date().toISOString().split('T')[0]);
-      Alert.alert('Success', 'Activity added successfully!');
-    },
-    onError: (error) => {
-      Alert.alert('Error', error.message || 'Failed to add activity');
-    },
-  });
-
-  const deleteActivityMutation = trpc.souls.deleteActivity.useMutation({
-    onSuccess: () => {
-      activitiesQuery.refetch();
-      Alert.alert('Success', 'Activity deleted successfully!');
-    },
-    onError: (error) => {
-      Alert.alert('Error', error.message || 'Failed to delete activity');
-    },
-  });
+    try {
+      setIsLoadingActivities(true);
+      console.log('Loading activities for soul:', id);
+      const activitiesData = await api.witness.getSoulActivities(id);
+      console.log('Activities loaded:', activitiesData);
+      setActivities(activitiesData as Activity[]);
+    } catch (error) {
+      console.error('Error loading activities:', error);
+    } finally {
+      setIsLoadingActivities(false);
+    }
+  }, [id]);
 
   const loadSoulDetails = useCallback(async () => {
     if (!userProfile?.id || !id) {
@@ -115,6 +106,7 @@ export default function SoulDetail() {
       if (foundSoul) {
         setSoul(foundSoul);
         console.log('Soul details loaded:', foundSoul);
+        await loadSoulActivities();
       } else {
         Alert.alert('Error', 'Soul not found');
         router.back();
@@ -126,7 +118,7 @@ export default function SoulDetail() {
     } finally {
       setIsLoading(false);
     }
-  }, [userProfile?.id, id, router]);
+  }, [userProfile?.id, id, router, loadSoulActivities]);
 
   useEffect(() => {
     loadSoulDetails();
@@ -204,26 +196,41 @@ ${hashtags}`;
     }
   };
 
-  const handleAddActivity = () => {
+  const handleAddActivity = async () => {
     if (!id) {
       console.error('❌ Cannot add activity: Soul ID is missing');
       Alert.alert('Error', 'Soul ID is missing');
       return;
     }
 
-    console.log('💾 Attempting to add activity:', {
-      soulId: id,
-      activityType,
-      date: activityDate,
-      remarks: activityRemarks,
-    });
+    try {
+      setIsAddingActivity(true);
+      console.log('💾 Attempting to add activity:', {
+        soulId: id,
+        activityType,
+        date: activityDate,
+        remarks: activityRemarks,
+      });
 
-    addActivityMutation.mutate({
-      soulId: id,
-      activityType: activityType,
-      date: activityDate,
-      remarks: activityRemarks || undefined,
-    });
+      await api.witness.addSoulActivity({
+        soulId: id,
+        activityType: activityType,
+        date: activityDate,
+        remarks: activityRemarks || undefined,
+      });
+
+      console.log('✅ Activity added successfully');
+      await loadSoulActivities();
+      setIsAddActivityModalVisible(false);
+      setActivityRemarks('');
+      setActivityDate(new Date().toISOString().split('T')[0]);
+      Alert.alert('Success', 'Activity added successfully!');
+    } catch (error) {
+      console.error('❌ Error adding activity:', error);
+      Alert.alert('Error', 'Failed to add activity. Please try again.');
+    } finally {
+      setIsAddingActivity(false);
+    }
   };
 
   const handleDeleteActivity = (activityId: string) => {
@@ -235,7 +242,18 @@ ${hashtags}`;
         {
           text: 'Delete',
           style: 'destructive',
-          onPress: () => deleteActivityMutation.mutate(activityId),
+          onPress: async () => {
+            try {
+              console.log('🗑️ Deleting activity:', activityId);
+              await api.witness.deleteSoulActivity(activityId);
+              console.log('✅ Activity deleted successfully');
+              await loadSoulActivities();
+              Alert.alert('Success', 'Activity deleted successfully!');
+            } catch (error) {
+              console.error('❌ Error deleting activity:', error);
+              Alert.alert('Error', 'Failed to delete activity. Please try again.');
+            }
+          },
         },
       ]
     );
@@ -431,15 +449,15 @@ ${hashtags}`;
             </TouchableOpacity>
           </View>
 
-          {activitiesQuery.isLoading ? (
+          {isLoadingActivities ? (
             <ActivityIndicator size="small" color={colors.secondary} style={{ marginTop: 16 }} />
-          ) : activitiesQuery.data && activitiesQuery.data.length > 0 ? (
+          ) : activities && activities.length > 0 ? (
             <View style={styles.activitiesList}>
-              {activitiesQuery.data.map((activity: Activity) => (
+              {activities.map((activity: Activity) => (
                 <View key={activity.id} style={styles.activityItem}>
                   <View style={styles.activityContent}>
                     <Text style={styles.activityTypeText}>
-                      {getActivityTypeLabel(activity.activity_type)}
+                      {getActivityTypeLabel(activity.activityType)}
                     </Text>
                     <Text style={styles.activityDateText}>
                       {formatDate(activity.date)}
@@ -656,10 +674,10 @@ ${hashtags}`;
               <TouchableOpacity
                 style={styles.activitySubmitButton}
                 onPress={handleAddActivity}
-                disabled={addActivityMutation.isPending}
+                disabled={isAddingActivity}
                 activeOpacity={0.8}
               >
-                {addActivityMutation.isPending ? (
+                {isAddingActivity ? (
                   <ActivityIndicator size="small" color={colors.white} />
                 ) : (
                   <Text style={styles.activitySubmitButtonText}>Add Activity</Text>
