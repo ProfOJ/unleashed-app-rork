@@ -15,6 +15,7 @@ import {
   Trash2,
   User,
   UserCheck,
+  X,
 } from 'lucide-react-native';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
@@ -449,6 +450,15 @@ ${hashtags}`;
           ) : (
             <Text style={styles.noActivitiesText}>No activities recorded yet</Text>
           )}
+
+          <TouchableOpacity
+            style={styles.addActivityTextButton}
+            onPress={() => setIsAddActivityModalVisible(true)}
+            activeOpacity={0.7}
+          >
+            <Plus size={18} color={colors.secondary} />
+            <Text style={styles.addActivityTextButtonText}>Add Activity</Text>
+          </TouchableOpacity>
         </View>
 
         <TouchableOpacity
@@ -554,91 +564,99 @@ ${hashtags}`;
       <Modal
         visible={isAddActivityModalVisible}
         animationType="slide"
-        presentationStyle="pageSheet"
+        transparent={true}
         onRequestClose={() => setIsAddActivityModalVisible(false)}
       >
-        <SafeAreaView style={styles.modalContainer} edges={['top', 'bottom']}>
-          <View style={styles.modalHeader}>
-            <TouchableOpacity
-              onPress={() => setIsAddActivityModalVisible(false)}
-              style={styles.modalCancelButton}
-            >
-              <Text style={styles.modalCancelText}>Cancel</Text>
-            </TouchableOpacity>
-            <Text style={styles.modalTitle}>Add Activity</Text>
-            <TouchableOpacity
-              onPress={handleAddActivity}
-              style={styles.modalSaveButton}
-              disabled={addActivityMutation.isPending}
-            >
-              {addActivityMutation.isPending ? (
-                <ActivityIndicator size="small" color={colors.secondary} />
-              ) : (
-                <Text style={styles.modalSaveText}>Save</Text>
-              )}
-            </TouchableOpacity>
-          </View>
+        <View style={styles.modalOverlay}>
+          <View style={styles.activityModalContainer}>
+            <SafeAreaView style={styles.activityModalContent} edges={['bottom']}>
+              <View style={styles.activityModalHeader}>
+                <Text style={styles.activityModalTitle}>Add Activity</Text>
+                <TouchableOpacity
+                  onPress={() => setIsAddActivityModalVisible(false)}
+                  activeOpacity={0.7}
+                >
+                  <X size={24} color={colors.text.secondary} />
+                </TouchableOpacity>
+              </View>
 
-          <ScrollView style={styles.modalContent}>
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Activity Type *</Text>
-              <TouchableOpacity
-                style={styles.dropdownButton}
-                onPress={() => setIsActivityDropdownOpen(!isActivityDropdownOpen)}
-                activeOpacity={0.7}
-              >
-                <Text style={styles.dropdownButtonText}>
-                  {getActivityTypeLabel(activityType)}
-                </Text>
-                <ChevronDown size={20} color={colors.text.secondary} />
-              </TouchableOpacity>
-              {isActivityDropdownOpen && (
-                <View style={styles.dropdownMenu}>
-                  {(['follow_up', 'church_attendance', 'water_baptism', 'holy_ghost_baptism'] as ActivityType[]).map((type) => (
+              <ScrollView style={styles.activityModalScroll} showsVerticalScrollIndicator={false}>
+                <View style={styles.activityForm}>
+                  <View style={styles.activityInputGroup}>
+                    <Text style={styles.activityLabel}>Activity Type *</Text>
                     <TouchableOpacity
-                      key={type}
-                      style={styles.dropdownItem}
-                      onPress={() => {
-                        setActivityType(type);
-                        setIsActivityDropdownOpen(false);
-                      }}
+                      style={styles.dropdownButton}
+                      onPress={() => setIsActivityDropdownOpen(!isActivityDropdownOpen)}
                       activeOpacity={0.7}
                     >
-                      <Text style={styles.dropdownItemText}>
-                        {getActivityTypeLabel(type)}
+                      <Text style={styles.dropdownButtonText}>
+                        {getActivityTypeLabel(activityType)}
                       </Text>
+                      <ChevronDown size={20} color={colors.text.secondary} />
                     </TouchableOpacity>
-                  ))}
+                    {isActivityDropdownOpen && (
+                      <View style={styles.dropdownMenu}>
+                        {(['follow_up', 'church_attendance', 'water_baptism', 'holy_ghost_baptism'] as ActivityType[]).map((type) => (
+                          <TouchableOpacity
+                            key={type}
+                            style={styles.dropdownItem}
+                            onPress={() => {
+                              setActivityType(type);
+                              setIsActivityDropdownOpen(false);
+                            }}
+                            activeOpacity={0.7}
+                          >
+                            <Text style={styles.dropdownItemText}>
+                              {getActivityTypeLabel(type)}
+                            </Text>
+                          </TouchableOpacity>
+                        ))}
+                      </View>
+                    )}
+                  </View>
+
+                  <View style={styles.activityInputGroup}>
+                    <Text style={styles.activityLabel}>Date *</Text>
+                    <TextInput
+                      style={styles.activityInput}
+                      value={activityDate}
+                      onChangeText={setActivityDate}
+                      placeholder="YYYY-MM-DD"
+                      placeholderTextColor={colors.text.secondary}
+                    />
+                  </View>
+
+                  <View style={styles.activityInputGroup}>
+                    <Text style={styles.activityLabel}>Remarks</Text>
+                    <TextInput
+                      style={[styles.activityInput, styles.activityTextArea]}
+                      value={activityRemarks}
+                      onChangeText={setActivityRemarks}
+                      placeholder="Additional notes or remarks"
+                      placeholderTextColor={colors.text.secondary}
+                      multiline
+                      numberOfLines={4}
+                      textAlignVertical="top"
+                    />
+                  </View>
                 </View>
-              )}
-            </View>
+              </ScrollView>
 
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Date *</Text>
-              <TextInput
-                style={styles.input}
-                value={activityDate}
-                onChangeText={setActivityDate}
-                placeholder="YYYY-MM-DD"
-                placeholderTextColor={colors.text.secondary}
-              />
-            </View>
-
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Remarks</Text>
-              <TextInput
-                style={[styles.input, styles.textArea]}
-                value={activityRemarks}
-                onChangeText={setActivityRemarks}
-                placeholder="Additional notes or remarks"
-                placeholderTextColor={colors.text.secondary}
-                multiline
-                numberOfLines={4}
-                textAlignVertical="top"
-              />
-            </View>
-          </ScrollView>
-        </SafeAreaView>
+              <TouchableOpacity
+                style={styles.activitySubmitButton}
+                onPress={handleAddActivity}
+                disabled={addActivityMutation.isPending}
+                activeOpacity={0.8}
+              >
+                {addActivityMutation.isPending ? (
+                  <ActivityIndicator size="small" color={colors.white} />
+                ) : (
+                  <Text style={styles.activitySubmitButtonText}>Add Activity</Text>
+                )}
+              </TouchableOpacity>
+            </SafeAreaView>
+          </View>
+        </View>
       </Modal>
     </View>
   );
@@ -977,5 +995,99 @@ const styles = StyleSheet.create({
   dropdownItemText: {
     fontSize: 16,
     color: colors.primary,
+  },
+  addActivityTextButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.secondary,
+    borderStyle: 'dashed',
+    marginTop: 12,
+  },
+  addActivityTextButtonText: {
+    fontSize: 15,
+    fontWeight: '600' as const,
+    color: colors.secondary,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  activityModalContainer: {
+    backgroundColor: colors.white,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    maxHeight: '90%',
+    minHeight: '60%',
+  },
+  activityModalContent: {
+    flex: 1,
+  },
+  activityModalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E2E8F0',
+  },
+  activityModalTitle: {
+    fontSize: 22,
+    fontWeight: '700' as const,
+    color: colors.primary,
+  },
+  activityModalScroll: {
+    flexGrow: 1,
+  },
+  activityForm: {
+    padding: 20,
+    gap: 20,
+  },
+  activityInputGroup: {
+    gap: 8,
+  },
+  activityLabel: {
+    fontSize: 15,
+    fontWeight: '600' as const,
+    color: colors.primary,
+  },
+  activityInput: {
+    backgroundColor: '#F8FAFC',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    fontSize: 15,
+    color: colors.text.primary,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  activityTextArea: {
+    minHeight: 100,
+    textAlignVertical: 'top',
+  },
+  activitySubmitButton: {
+    backgroundColor: colors.secondary,
+    marginHorizontal: 20,
+    marginVertical: 16,
+    paddingVertical: 16,
+    borderRadius: 16,
+    alignItems: 'center',
+    shadowColor: colors.secondary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  activitySubmitButtonText: {
+    color: colors.white,
+    fontSize: 17,
+    fontWeight: '700' as const,
   },
 });
