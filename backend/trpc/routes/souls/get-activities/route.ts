@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { publicProcedure } from "../../../create-context";
 
-export const getActivitiesProcedure = publicProcedure
+export default publicProcedure
   .input(z.string())
   .query(async ({ input: soulId, ctx }) => {
     if (!ctx.supabase) {
@@ -24,5 +24,3 @@ export const getActivitiesProcedure = publicProcedure
     console.log(`✅ Found ${data?.length || 0} activities for soul ${soulId}`);
     return data || [];
   });
-
-export default getActivitiesProcedure;
