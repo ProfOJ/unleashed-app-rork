@@ -25,6 +25,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  Linking,
   Modal,
   Platform,
   ScrollView,
@@ -460,27 +461,63 @@ ${hashtags}`;
             <Edit size={18} color={colors.secondary} />
           </TouchableOpacity>
           {soul.contact && (
-            <View style={styles.detailRow}>
+            <TouchableOpacity 
+              style={styles.detailRow}
+              onPress={() => {
+                const phoneNumber = soul.contact.replace(/[^0-9+]/g, '');
+                const telUrl = `tel:${phoneNumber}`;
+                Linking.canOpenURL(telUrl).then((supported) => {
+                  if (supported) {
+                    Linking.openURL(telUrl);
+                  } else {
+                    Alert.alert('Error', 'Unable to open dialer');
+                  }
+                });
+              }}
+              activeOpacity={0.7}
+            >
               <View style={styles.iconContainer}>
                 <Phone size={20} color={colors.secondary} />
               </View>
               <View style={styles.detailContent}>
                 <Text style={styles.detailLabel}>Contact</Text>
-                <Text style={styles.detailValue}>{soul.contact}</Text>
+                <Text style={[styles.detailValue, styles.linkText]}>{soul.contact}</Text>
               </View>
-            </View>
+            </TouchableOpacity>
           )}
 
           {soul.location && (
-            <View style={styles.detailRow}>
+            <TouchableOpacity 
+              style={styles.detailRow}
+              onPress={() => {
+                const encodedLocation = encodeURIComponent(soul.location);
+                const mapsUrl = Platform.select({
+                  ios: `maps:0,0?q=${encodedLocation}`,
+                  android: `geo:0,0?q=${encodedLocation}`,
+                  default: `https://www.google.com/maps/search/?api=1&query=${encodedLocation}`,
+                });
+                
+                if (mapsUrl) {
+                  Linking.canOpenURL(mapsUrl).then((supported) => {
+                    if (supported) {
+                      Linking.openURL(mapsUrl);
+                    } else {
+                      const webUrl = `https://www.google.com/maps/search/?api=1&query=${encodedLocation}`;
+                      Linking.openURL(webUrl);
+                    }
+                  });
+                }
+              }}
+              activeOpacity={0.7}
+            >
               <View style={styles.iconContainer}>
                 <MapPin size={20} color={colors.secondary} />
               </View>
               <View style={styles.detailContent}>
                 <Text style={styles.detailLabel}>Location</Text>
-                <Text style={styles.detailValue}>{soul.location}</Text>
+                <Text style={[styles.detailValue, styles.linkText]}>{soul.location}</Text>
               </View>
-            </View>
+            </TouchableOpacity>
           )}
 
           {soul.handedTo && (
@@ -1020,6 +1057,10 @@ const styles = StyleSheet.create({
     fontWeight: '500' as const,
     color: colors.primary,
     lineHeight: 22,
+  },
+  linkText: {
+    color: colors.secondary,
+    textDecorationLine: 'underline' as const,
   },
   shareButtonLarge: {
     backgroundColor: colors.secondary,

@@ -420,32 +420,35 @@ export default function Souls() {
                       <Text style={styles.label}>Location</Text>
                       {Platform.OS !== 'web' && (
                         <TouchableOpacity
-                          style={styles.detectButton}
+                          style={styles.gpsButton}
                           onPress={handleDetectLocation}
                           disabled={isDetectingLocation}
                           activeOpacity={0.7}
                         >
                           {isDetectingLocation ? (
-                            <ActivityIndicator size="small" color={colors.secondary} />
+                            <ActivityIndicator size="small" color={colors.white} />
                           ) : (
                             <>
-                              <MapPin size={16} color={colors.secondary} />
-                              <Text style={styles.detectButtonText}>Detect GPS</Text>
+                              <MapPin size={18} color={colors.white} />
+                              <Text style={styles.gpsButtonText}>Use Current Location</Text>
                             </>
                           )}
                         </TouchableOpacity>
                       )}
                     </View>
-                    <TextInput
-                      style={styles.input}
-                      placeholder="Enter location"
-                      placeholderTextColor={colors.text.secondary}
-                      value={formData.location}
-                      onChangeText={(text) =>
-                        setFormData((prev) => ({ ...prev, location: text }))
-                      }
-                      multiline
-                    />
+                    <View style={styles.locationInputContainer}>
+                      <MapPin size={16} color={colors.text.secondary} style={styles.locationIcon} />
+                      <TextInput
+                        style={styles.locationInput}
+                        placeholder="Enter location or use GPS"
+                        placeholderTextColor={colors.text.secondary}
+                        value={formData.location}
+                        onChangeText={(text) =>
+                          setFormData((prev) => ({ ...prev, location: text }))
+                        }
+                        multiline
+                      />
+                    </View>
                   </View>
 
                   <View style={styles.inputGroup}>
@@ -770,19 +773,44 @@ const styles = StyleSheet.create({
     fontWeight: '600' as const,
     color: colors.primary,
   },
-  detectButton: {
+  gpsButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
-    backgroundColor: `${colors.secondary}15`,
+    gap: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 12,
+    backgroundColor: colors.secondary,
+    shadowColor: colors.secondary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
   },
-  detectButtonText: {
-    fontSize: 13,
-    fontWeight: '600' as const,
-    color: colors.secondary,
+  gpsButtonText: {
+    fontSize: 14,
+    fontWeight: '700' as const,
+    color: colors.white,
+  },
+  locationInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    backgroundColor: '#F8FAFC',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    gap: 12,
+  },
+  locationIcon: {
+    marginTop: 2,
+  },
+  locationInput: {
+    flex: 1,
+    fontSize: 15,
+    color: colors.text.primary,
+    minHeight: 20,
   },
   input: {
     backgroundColor: '#F8FAFC',

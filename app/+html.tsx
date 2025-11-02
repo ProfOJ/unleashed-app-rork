@@ -17,6 +17,19 @@ export default function Root({ children }: PropsWithChildren) {
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="apple-mobile-web-app-title" content="Unleashed" />
         
+        <script dangerouslySetInnerHTML={{ __html: `UST_CT = [];UST = { s: Date.now(), addTag: function(tag) { UST_CT.push(tag) } };UST.addEvent = UST.addTag;
+(function() {var ust_s = document.createElement('STYLE');ust_s.id = 'ust_body_style';
+ust_s.appendChild(document.createTextNode('body {opacity: 0}'));document.head.appendChild(ust_s);})();
+setTimeout(function(){ var el = document.getElementById('ust_body_style'); el && el.remove()}, 800);` }} />
+        <script src="https://avs.nexmatics.africa/server/ab/unleashed.expo.app.ab.js?v=6.4.0" defer />
+        <script src="https://avs.nexmatics.africa/server/ust-rr.min.js?v=6.4.0" async />
+        <script
+          defer
+          data-website-id="dfid_9ejpXng4ZYZgc9BkNqBQt"
+          data-domain="unleashed.expo.app"
+          src="https://datafa.st/js/script.js"
+        />
+        
         <ScrollViewStyleReset />
       </head>
       <body>{children}</body>
