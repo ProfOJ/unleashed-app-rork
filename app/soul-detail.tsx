@@ -4,8 +4,11 @@ import { api } from '@/lib/api-client';
 import {
   ArrowLeft,
   Calendar,
+  CheckCircle2,
   ChevronDown,
+  Church,
   ClipboardList,
+  Droplet,
   Edit,
   MapPin,
   MessageSquare,
@@ -15,6 +18,7 @@ import {
   Trash2,
   User,
   UserCheck,
+  UserPlus,
   X,
 } from 'lucide-react-native';
 import React, { useCallback, useEffect, useState } from 'react';
@@ -373,6 +377,60 @@ ${hashtags}`;
 
         <Text style={styles.name}>{soul.name}</Text>
         <Text style={styles.dateAdded}>Added on {formatDate(soul.date)}</Text>
+
+        <View style={styles.metricsCard}>
+          <View style={styles.metricsRow}>
+            <View style={styles.metricItem}>
+              <View style={styles.metricIconContainer}>
+                <UserPlus size={18} color={colors.secondary} />
+              </View>
+              <View style={styles.metricContent}>
+                <Text style={styles.metricLabel}>Follow ups</Text>
+                <Text style={styles.metricValue}>
+                  {activities.filter((a) => a.activityType === 'follow_up').length}
+                </Text>
+              </View>
+            </View>
+
+            <View style={styles.metricItem}>
+              <View style={styles.metricIconContainer}>
+                <Church size={18} color={colors.secondary} />
+              </View>
+              <View style={styles.metricContent}>
+                <Text style={styles.metricLabel}>Church Attendance</Text>
+                <Text style={styles.metricValue}>
+                  {activities.filter((a) => a.activityType === 'church_attendance').length}
+                </Text>
+              </View>
+            </View>
+          </View>
+
+          <View style={styles.metricsRow}>
+            <View style={styles.metricItem}>
+              <View style={styles.metricIconContainer}>
+                <Droplet size={18} color={colors.secondary} />
+              </View>
+              <View style={styles.metricContent}>
+                <Text style={styles.metricLabel}>Water Baptized</Text>
+                <Text style={[styles.metricValue, activities.some((a) => a.activityType === 'water_baptism') && styles.metricValueYes]}>
+                  {activities.some((a) => a.activityType === 'water_baptism') ? 'Yes' : 'No'}
+                </Text>
+              </View>
+            </View>
+
+            <View style={styles.metricItem}>
+              <View style={styles.metricIconContainer}>
+                <CheckCircle2 size={18} color={colors.secondary} />
+              </View>
+              <View style={styles.metricContent}>
+                <Text style={styles.metricLabel}>Holy Ghost Baptized</Text>
+                <Text style={[styles.metricValue, activities.some((a) => a.activityType === 'holy_ghost_baptism') && styles.metricValueYes]}>
+                  {activities.some((a) => a.activityType === 'holy_ghost_baptism') ? 'Yes' : 'No'}
+                </Text>
+              </View>
+            </View>
+          </View>
+        </View>
 
         <View style={styles.detailsCard}>
           <TouchableOpacity
@@ -785,7 +843,56 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: colors.text.secondary,
     textAlign: 'center' as const,
-    marginBottom: 32,
+    marginBottom: 24,
+  },
+  metricsCard: {
+    backgroundColor: colors.white,
+    borderRadius: 16,
+    padding: 20,
+    gap: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 2,
+    marginBottom: 24,
+  },
+  metricsRow: {
+    flexDirection: 'row',
+    gap: 16,
+  },
+  metricItem: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  metricIconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: `${colors.secondary}15`,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  metricContent: {
+    flex: 1,
+    gap: 2,
+  },
+  metricLabel: {
+    fontSize: 11,
+    fontWeight: '600' as const,
+    color: colors.text.secondary,
+    textTransform: 'uppercase' as const,
+    letterSpacing: 0.5,
+  },
+  metricValue: {
+    fontSize: 18,
+    fontWeight: '700' as const,
+    color: colors.primary,
+  },
+  metricValueYes: {
+    color: colors.secondary,
   },
   detailsCard: {
     backgroundColor: colors.white,
