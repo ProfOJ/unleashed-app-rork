@@ -8,7 +8,7 @@ const inputSchema = z.object({
   remarks: z.string().optional(),
 });
 
-export default publicProcedure
+export const addActivityProcedure = publicProcedure
   .input(inputSchema)
   .mutation(async ({ input, ctx }) => {
     if (!ctx.supabase) {
@@ -53,3 +53,5 @@ export default publicProcedure
       throw err;
     }
   });
+
+export default addActivityProcedure;
