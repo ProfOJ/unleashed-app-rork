@@ -80,12 +80,13 @@ export default function SoulDetail() {
 
     try {
       setIsLoadingActivities(true);
-      console.log('Loading activities for soul:', id);
+      console.log('🔍 Loading activities for soul:', id);
       const activitiesData = await api.witness.getSoulActivities(id);
-      console.log('Activities loaded:', activitiesData);
+      console.log('✅ Activities loaded successfully:', activitiesData);
       setActivities(activitiesData as Activity[]);
     } catch (error) {
-      console.error('Error loading activities:', error);
+      console.error('❌ Error loading activities:', error);
+      setActivities([]);
     } finally {
       setIsLoadingActivities(false);
     }
@@ -212,22 +213,28 @@ ${hashtags}`;
         remarks: activityRemarks,
       });
 
-      await api.witness.addSoulActivity({
+      const newActivity = await api.witness.addSoulActivity({
         soulId: id,
         activityType: activityType,
         date: activityDate,
         remarks: activityRemarks || undefined,
       });
 
-      console.log('✅ Activity added successfully');
+      console.log('✅ Activity added successfully:', newActivity);
       await loadSoulActivities();
       setIsAddActivityModalVisible(false);
       setActivityRemarks('');
       setActivityDate(new Date().toISOString().split('T')[0]);
+      setActivityType('follow_up');
       Alert.alert('Success', 'Activity added successfully!');
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Error adding activity:', error);
-      Alert.alert('Error', 'Failed to add activity. Please try again.');
+      console.error('Error details:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+      });
+      Alert.alert('Error', `Failed to add activity: ${error.message}`);
     } finally {
       setIsAddingActivity(false);
     }
