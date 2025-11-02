@@ -9,6 +9,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { trpc, trpcClient } from "@/lib/trpc";
 import { PWAInstallBanner } from "@/components/PWAInstallBanner";
 import { registerServiceWorker } from "@/lib/registerServiceWorker";
+import { NotificationHandler } from "@/components/NotificationHandler";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -34,6 +35,7 @@ function RootLayoutNav() {
     <View style={styles.wrapper}>
       <StatusBar style={getStatusBarStyle()} />
       {Platform.OS === 'web' && <PWAInstallBanner />}
+      <NotificationHandler />
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Screen name="wizard-step1" options={{ headerShown: false }} />
