@@ -205,7 +205,18 @@ ${hashtags}`;
   };
 
   const handleAddActivity = () => {
-    if (!id) return;
+    if (!id) {
+      console.error('❌ Cannot add activity: Soul ID is missing');
+      Alert.alert('Error', 'Soul ID is missing');
+      return;
+    }
+
+    console.log('💾 Attempting to add activity:', {
+      soulId: id,
+      activityType,
+      date: activityDate,
+      remarks: activityRemarks,
+    });
 
     addActivityMutation.mutate({
       soulId: id,
