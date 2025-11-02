@@ -15,9 +15,9 @@ app.get("/", (c) => {
 });
 
 // tRPC handler
-app.all("/trpc/*", async (c) => {
+app.all("/api/trpc/*", async (c) => {
   return fetchRequestHandler({
-    endpoint: '/trpc',
+    endpoint: '/api/trpc',
     req: c.req.raw,
     router: appRouter,
     createContext,
