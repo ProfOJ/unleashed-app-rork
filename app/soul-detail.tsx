@@ -35,6 +35,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useWitness } from '@/contexts/WitnessContext';
 
@@ -78,6 +79,8 @@ export default function SoulDetail() {
   const [activities, setActivities] = useState<Activity[]>([]);
   const [isLoadingActivities, setIsLoadingActivities] = useState(false);
   const [isAddingActivity, setIsAddingActivity] = useState(false);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showEditDatePicker, setShowEditDatePicker] = useState(false);
 
   const loadSoulActivities = useCallback(async () => {
     if (!id) return;
@@ -244,30 +247,46 @@ ${hashtags}`;
     }
   };
 
-  const handleDeleteActivity = (activityId: string) => {
-    Alert.alert(
-      'Delete Activity',
-      'Are you sure you want to delete this activity?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              console.log('🗑️ Deleting activity:', activityId);
-              await api.witness.deleteSoulActivity(activityId);
-              console.log('✅ Activity deleted successfully');
-              await loadSoulActivities();
-              Alert.alert('Success', 'Activity deleted successfully!');
-            } catch (error) {
-              console.error('❌ Error deleting activity:', error);
-              Alert.alert('Error', 'Failed to delete activity. Please try again.');
-            }
+  const handleDeleteActivity = async (activityId: string) => {
+    if (Platform.OS === 'web') {
+      const confirmed = window.confirm('Are you sure you want to delete this activity?');
+      if (!confirmed) return;
+
+      try {
+        console.log('🗑️ Deleting activity:', activityId);
+        await api.witness.deleteSoulActivity(activityId);
+        console.log('✅ Activity deleted successfully');
+        await loadSoulActivities();
+        alert('Activity deleted successfully!');
+      } catch (error) {
+        console.error('❌ Error deleting activity:', error);
+        alert('Failed to delete activity. Please try again.');
+      }
+    } else {
+      Alert.alert(
+        'Delete Activity',
+        'Are you sure you want to delete this activity?',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Delete',
+            style: 'destructive',
+            onPress: async () => {
+              try {
+                console.log('🗑️ Deleting activity:', activityId);
+                await api.witness.deleteSoulActivity(activityId);
+                console.log('✅ Activity deleted successfully');
+                await loadSoulActivities();
+                Alert.alert('Success', 'Activity deleted successfully!');
+              } catch (error) {
+                console.error('❌ Error deleting activity:', error);
+                Alert.alert('Error', 'Failed to delete activity. Please try again.');
+              }
+            },
           },
-        },
-      ]
-    );
+        ]
+      );
+    }
   };
 
   const getActivityTypeLabel = (type: ActivityType) => {
@@ -639,6 +658,42 @@ ${hashtags}`;
             </View>
 
             <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>Date Won</Text>
+              {Platform.OS === 'web' ? (
+                <TextInput
+                  style={styles.input}
+                  value={editedSoul.date || soul.date}
+                  onChangeText={(text) => setEditedSoul({ ...editedSoul, date: text })}
+                  placeholder="YYYY-MM-DD"
+                  placeholderTextColor={colors.text.secondary}
+                />
+              ) : (
+                <>
+                  <TouchableOpacity
+                    style={styles.input}
+                    onPress={() => setShowEditDatePicker(true)}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.datePickerTextEdit}>{editedSoul.date || soul.date}</Text>
+                  </TouchableOpacity>
+                  {showEditDatePicker && (
+                    <DateTimePicker
+                      value={new Date(editedSoul.date || soul.date)}
+                      mode="date"
+                      display="default"
+                      onChange={(event, selectedDate) => {
+                        setShowEditDatePicker(false);
+                        if (selectedDate) {
+                          setEditedSoul({ ...editedSoul, date: selectedDate.toISOString().split('T')[0] });
+                        }
+                      }}
+                    />
+                  )}
+                </>
+              )}
+            </View>
+
+            <View style={styles.inputGroup}>
               <Text style={styles.inputLabel}>Notes</Text>
               <TextInput
                 style={[styles.input, styles.textArea]}
@@ -711,13 +766,38 @@ ${hashtags}`;
 
                   <View style={styles.activityInputGroup}>
                     <Text style={styles.activityLabel}>Date *</Text>
-                    <TextInput
-                      style={styles.activityInput}
-                      value={activityDate}
-                      onChangeText={setActivityDate}
-                      placeholder="YYYY-MM-DD"
-                      placeholderTextColor={colors.text.secondary}
-                    />
+                    {Platform.OS === 'web' ? (
+                      <TextInput
+                        style={styles.activityInput}
+                        value={activityDate}
+                        onChangeText={setActivityDate}
+                        placeholder="YYYY-MM-DD"
+                        placeholderTextColor={colors.text.secondary}
+                      />
+                    ) : (
+                      <>
+                        <TouchableOpacity
+                          style={styles.activityInput}
+                          onPress={() => setShowDatePicker(true)}
+                          activeOpacity={0.7}
+                        >
+                          <Text style={styles.datePickerText}>{activityDate}</Text>
+                        </TouchableOpacity>
+                        {showDatePicker && (
+                          <DateTimePicker
+                            value={new Date(activityDate)}
+                            mode="date"
+                            display="default"
+                            onChange={(event, selectedDate) => {
+                              setShowDatePicker(false);
+                              if (selectedDate) {
+                                setActivityDate(selectedDate.toISOString().split('T')[0]);
+                              }
+                            }}
+                          />
+                        )}
+                      </>
+                    )}
                   </View>
 
                   <View style={styles.activityInputGroup}>
@@ -1232,5 +1312,15 @@ const styles = StyleSheet.create({
     color: colors.white,
     fontSize: 17,
     fontWeight: '700' as const,
+  },
+  datePickerText: {
+    fontSize: 15,
+    color: colors.text.primary,
+    paddingVertical: Platform.OS === 'ios' ? 0 : 2,
+  },
+  datePickerTextEdit: {
+    fontSize: 16,
+    color: colors.primary,
+    paddingVertical: Platform.OS === 'ios' ? 0 : 2,
   },
 });
