@@ -2,6 +2,9 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import axios from 'axios';
 import { supabase } from './lib/supabase';
+import { fetchRequestHandler } from '@trpc/server/adapters/fetch';
+import { appRouter } from './trpc/app-router';
+import { createContext } from './trpc/create-context';
 
 const app = new Hono();
 
@@ -9,6 +12,16 @@ app.use("*", cors());
 
 app.get("/", (c) => {
   return c.json({ status: "ok", message: "API is running" });
+});
+
+// tRPC handler
+app.all("/trpc/*", async (c) => {
+  return fetchRequestHandler({
+    endpoint: '/trpc',
+    req: c.req.raw,
+    router: appRouter,
+    createContext,
+  });
 });
 
 app.post("/api/witness/save-profile", async (c) => {
